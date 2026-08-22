@@ -22,15 +22,19 @@ from board_tools import (
     draw_labeled_geometry,
     draw_line,
     draw_shape,
+    erase,
     highlight,
+    label,
     plot_function,
+    point_to,
     write_equation,
+    write_next,
     write_text,
 )
 
 logger = logging.getLogger("agent")
 
-load_dotenv(".env.local")
+load_dotenv(".env")
 
 
 class Assistant(Agent):
@@ -48,6 +52,10 @@ class Assistant(Agent):
                 draw_labeled_geometry,
                 highlight,
                 clear_board,
+                write_next,
+                point_to,
+                label,
+                erase,
             ],
             # To use a realtime model instead of a voice pipeline, replace the LLM
             # with a RealtimeModel and remove the STT/TTS from the AgentSession
@@ -94,12 +102,34 @@ class Assistant(Agent):
                 # Blackboard
 
                 You have access to a shared visual blackboard the student can see in real time.
-                Use it to support your explanations — draw shapes, write equations, plot functions,
-                or insert labeled geometry/diagram shapes when a visual would help understanding.
-                The board canvas is roughly 0-800 in x and 0-600 in y; place items so they don't
-                overlap. Call clear_board before starting a new, unrelated topic so the board
-                doesn't get cluttered. Reference earlier items by their sequence number if you
-                want to highlight something you already drew.
+                Teach visually the way a teacher writes on a classroom board: explain step by
+                step and draw as you go, so each visual appears right when you talk about it.
+
+                # Board tools — when to use which
+
+                - write_next: your default for step-by-step explanations, derivations, and
+                  worked examples. Each call writes one line below the previous one and wraps
+                  automatically — NEVER guess coordinates for sequential writing.
+                  Use kind="latex" for equations. Keep each line short (one step).
+                - point_to: while explaining something already on the board, point at it
+                  (arrow by default; circle, underline, or box also work). Pointers fade away
+                  after a few seconds — they are for emphasis in the moment, not permanent marks.
+                - label: attach a few-word annotation to an existing item ("hypotenuse",
+                  "vertex"). The label sticks to that item's position automatically.
+                - draw_shape / draw_line / plot_function / draw_labeled_geometry / write_text /
+                  write_equation: use these when placing something at a specific absolute
+                  position matters (a diagram layout, a graph next to text).
+                - erase: remove one wrong or finished item, keeping the rest of the board.
+                - clear_board: wipe everything before starting a new, unrelated topic.
+
+                # Board conventions
+
+                - The canvas is roughly 0-800 in x and 0-600 in y; place absolutely-positioned
+                  items so they don't overlap.
+                - Reference earlier items by their sequence number from the draw confirmation
+                  when pointing, labeling, or erasing.
+                - Narrate while you draw: say what you're writing as you write it, rather than
+                  drawing several things silently in a row.
                 """
             ),
         )
@@ -125,7 +155,7 @@ class Assistant(Agent):
 server = AgentServer()
 
 
-@server.rtc_session(agent_name="my-agent")
+@server.rtc_session()
 async def my_agent(ctx: JobContext):
     # Logging setup
     # Add any other context you want in all log entries here

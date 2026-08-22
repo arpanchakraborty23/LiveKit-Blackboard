@@ -15,6 +15,8 @@ GEOMETRY_PACKS = (
     "biology",
     "chemistry",
 )
+POINT_STYLES = ("arrow", "circle", "underline", "box")
+LABEL_ANCHORS = ("top", "bottom", "left", "right")
 
 
 @function_tool()
@@ -214,3 +216,119 @@ async def clear_board(context: RunContext) -> str:
     room = get_job_context().room
     await board_state.broadcast_clear(room)
     return "Cleared the board"
+
+
+@function_tool()
+async def write_next(
+    context: RunContext,
+    content: str,
+    kind: str = "text",
+) -> str:
+    """Write the next line of a step-by-step explanation without specifying coordinates.
+
+    Use this for sequential derivations and worked examples: each call writes
+    below the previous one, automatically flowing to a new line, wrapping to a
+    second column when the board fills up.
+
+    Args:
+        content: The text or equation to write. For kind="latex", provide LaTeX
+                 source, e.g. "x = \\\\frac{-b \\\\pm \\\\sqrt{b^2-4ac}}{2a}"
+        kind: What to write — "text" for plain writing, "latex" for an equation
+    """
+    if kind not in ("text", "latex"):
+        raise ToolError(f"Unknown kind '{kind}'. Use 'text' or 'latex'.")
+
+    room_name = get_job_context().room.name
+    line_height = board_state.CURSOR_LINE_HEIGHT
+    if kind == "latex":
+        line_height = max(line_height, 56)
+    width = len(content) * board_state.CURSOR_CHAR_WIDTH
+    position = board_state.advance_flow_cursor(room_name, width, line_height)
+
+    op_kind = "text" if kind == "text" else "latex"
+    op = await board_state.emit_op(
+        get_job_context().room,
+        {"kind": op_kind, "content": content, "position": [position["x"], position["y"]]},
+    )
+    return f"Wrote '{content}' (item #{op['seq']})"
+
+
+@function_tool()
+async def point_to(
+    context: RunContext,
+    target_seq: int,
+    style: str = "arrow",
+    note: str = "",
+) -> str:
+    """Point at something already on the board to draw attention to it.
+
+    The pointer appears anchored to that item, then fades away after a few
+    seconds — use it while explaining, not as permanent board content.
+
+    Args:
+        target_seq: Sequence number of the earlier item, from its draw confirmation
+        style: Pointer visual — arrow, circle, underline, or box around the item
+        note: Optional short caption spoken alongside, e.g. "this coefficient"
+    """
+    if style not in POINT_STYLES:
+        raise ToolError(f"Unknown style '{style}'. Use one of: {', '.join(POINT_STYLES)}.")
+    op = await board_state.emit_effect(
+        get_job_context().room,
+        {
+            "kind": "point_to",
+            "targetSeq": target_seq,
+            "style": style,
+            "note": note,
+        },
+    )
+    suffix = f" — {note}" if note else ""
+    return f"Pointed at item #{target_seq} with a {style}{suffix}"
+
+
+@function_tool()
+async def label(
+    context: RunContext,
+    target_seq: int,
+    content: str,
+    anchor: str = "top",
+    offset: int = 10,
+) -> str:
+    """Attach a short text label next to something already on the board.
+
+    The label stays anchored to that item's position, so you never need to
+    guess coordinates. Keep labels to a few words.
+
+    Args:
+        target_seq: Sequence number of the item to annotate
+        content: The label text
+        anchor: Which side of the item — top, bottom, left, or right
+        offset: Distance in pixels away from the item
+    """
+    if anchor not in LABEL_ANCHORS:
+        raise ToolError(f"Unknown anchor '{anchor}'. Use one of: {', '.join(LABEL_ANCHORS)}.")
+    op = await board_state.emit_op(
+        get_job_context().room,
+        {
+            "kind": "label",
+            "targetSeq": target_seq,
+            "content": content,
+            "anchor": anchor,
+            "offset": offset,
+        },
+    )
+    return f"Labeled item #{target_seq} '{content}' on its {anchor} (item #{op['seq']})"
+
+
+@function_tool()
+async def erase(context: RunContext, target_seq: int) -> str:
+    """Erase one specific item from the blackboard, keeping everything else.
+
+    Prefer this over clear_board when only part of the board is wrong.
+
+    Args:
+        target_seq: Sequence number of the item to remove
+    """
+    removed = await board_state.erase_item(get_job_context().room, target_seq)
+    if not removed:
+        return f"Item #{target_seq} is not on the board"
+    return f"Erased item #{target_seq}"
