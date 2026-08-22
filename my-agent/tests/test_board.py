@@ -105,8 +105,8 @@ async def test_broadcast_clear_resets_history_and_counter():
 
     assert board_state.get_snapshot(room.name) == [{"kind": "text", "seq": 1}]
     assert fresh["seq"] == 1
-    last_sent = room.local_participant.published[-1]["payload"]
-    assert last_sent == {"type": "op", "op": {"kind": "clear"}}
+    clear_sent = room.local_participant.published[-2]["payload"]
+    assert clear_sent == {"type": "op", "op": {"kind": "clear"}}
 
 
 async def test_send_snapshot_targets_single_participant():
@@ -125,9 +125,7 @@ async def test_send_snapshot_targets_single_participant():
 
 
 async def test_draw_shape_emits_shape_op(room):
-    result = await board_tools.draw_shape(
-        None, shape="circle", x=100, y=200, size=50
-    )
+    result = await board_tools.draw_shape(None, shape="circle", x=100, y=200, size=50)
 
     sent = room.local_participant.published[0]["payload"]["op"]
     assert sent["kind"] == "shape"

@@ -39,6 +39,16 @@ class Assistant(Agent):
             # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
             # See all available models at https://docs.livekit.io/agents/models/llm/
             llm=inference.LLM(model="google/gemma-4-31b-it"),
+            tools=[
+                draw_shape,
+                draw_line,
+                write_text,
+                write_equation,
+                plot_function,
+                draw_labeled_geometry,
+                highlight,
+                clear_board,
+            ],
             # To use a realtime model instead of a voice pipeline, replace the LLM
             # with a RealtimeModel and remove the STT/TTS from the AgentSession
             # (Note: This is for the OpenAI Realtime API. For other providers, see https://docs.livekit.io/agents/models/realtime/)
@@ -80,6 +90,16 @@ class Assistant(Agent):
                 - Stay within safe, lawful, and appropriate use; decline harmful or out-of-scope requests.
                 - For medical, legal, or financial topics, provide general information only and suggest consulting a qualified professional.
                 - Protect privacy and minimize sensitive data.
+
+                # Blackboard
+
+                You have access to a shared visual blackboard the student can see in real time.
+                Use it to support your explanations — draw shapes, write equations, plot functions,
+                or insert labeled geometry/diagram shapes when a visual would help understanding.
+                The board canvas is roughly 0-800 in x and 0-600 in y; place items so they don't
+                overlap. Call clear_board before starting a new, unrelated topic so the board
+                doesn't get cluttered. Reference earlier items by their sequence number if you
+                want to highlight something you already drew.
                 """
             ),
         )
@@ -112,6 +132,24 @@ async def my_agent(ctx: JobContext):
     ctx.log_context_fields = {
         "room": ctx.room.name,
     }
+
+    async def _send_board_snapshot(participant_identity: str) -> None:
+        try:
+            await board_state.send_snapshot(ctx.room, participant_identity)
+        except Exception:
+            logger.exception(f"failed to send board snapshot to {participant_identity}")
+
+    _background_tasks: set[asyncio.Task] = set()
+
+    def _spawn_board_snapshot(participant_identity: str) -> None:
+        task = asyncio.create_task(_send_board_snapshot(participant_identity))
+        _background_tasks.add(task)
+        task.add_done_callback(_background_tasks.discard)
+
+    # Register before connect so late joiners and reconnects replay board history
+    @ctx.room.on("participant_connected")
+    def _on_participant_connected(participant: rtc.RemoteParticipant) -> None:
+        _spawn_board_snapshot(participant.identity)
 
     # Set up a voice AI pipeline using AssemblyAI, Fish Audio, and the LiveKit turn detector
     session = AgentSession(
@@ -170,6 +208,11 @@ async def my_agent(ctx: JobContext):
 
     # Join the room and connect to the user
     await ctx.connect()
+
+    # Participants who joined before the agent never fire participant_connected,
+    # so replay the board to anyone already here
+    for participant in list(ctx.room.remote_participants.values()):
+        _spawn_board_snapshot(participant.identity)
 
 
 if __name__ == "__main__":
