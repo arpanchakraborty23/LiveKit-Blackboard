@@ -5,6 +5,8 @@ broadcast over LiveKit's data channel on the "board" topic; late joiners and
 reconnecting clients receive a full snapshot on join.
 """
 
+from __future__ import annotations
+
 import itertools
 import json
 from typing import Any

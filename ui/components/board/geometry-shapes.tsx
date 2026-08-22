@@ -1,7 +1,6 @@
 'use client';
 
 import type { ReactElement } from 'react';
-
 import type { GeometryPack } from '@/lib/board-ops';
 
 /**
@@ -22,9 +21,7 @@ const rightTriangle = () => (
 
 const equilateralTriangle = () => <path d="M 0 -44 L 40 32 L -40 32 Z" />;
 
-const parallelogram = () => (
-  <path d="M -28 30 L 44 30 L 28 -30 L -44 -30 Z" />
-);
+const parallelogram = () => <path d="M -28 30 L 44 30 L 28 -30 L -44 -30 Z" />;
 
 const trapezoid = () => <path d="M -26 34 L 26 34 L 42 -34 L -42 -34 Z" />;
 
@@ -136,11 +133,7 @@ const simpleCircuit = () => (
     <path d="M -30 -34 H 34 V 34 H -34 V -22 Z" />
     <line x1={-30} y1={-34} x2={-22} y2={-34} strokeWidth={3.5} />
     <line x1={-14} y1={-34} x2={-6} y2={-34} strokeWidth={3.5} />
-    <path
-      d="M -22 -40 V -28 M -14 -40 V -28 M -18 -44 V -24"
-      strokeWidth={2}
-      opacity={0.85}
-    />
+    <path d="M -22 -40 V -28 M -14 -40 V -28 M -18 -44 V -24" strokeWidth={2} opacity={0.85} />
     <rect x={10} y={-42} width={16} height={16} fill="none" />
     <circle cx={-34} cy={-22} r={2.5} fill="currentColor" stroke="none" />
   </g>
@@ -215,7 +208,12 @@ const waterMolecule = () => (
 const beaker = () => (
   <g>
     <path d="M -26 -38 V 26 Q -26 36 -16 36 H 16 Q 26 36 26 26 V -38" />
-    <path d="M 26 -30 H -26 V 24 Q -26 30 -16 30 H 16 Q 26 30 26 24 Z" fill="currentColor" fillOpacity={0.12} stroke="none" />
+    <path
+      d="M 26 -30 H -26 V 24 Q -26 30 -16 30 H 16 Q 26 30 26 24 Z"
+      fill="currentColor"
+      fillOpacity={0.12}
+      stroke="none"
+    />
     <line x1={-26} y1={-24} x2={26} y2={-24} strokeDasharray="3 4" opacity={0.7} />
   </g>
 );

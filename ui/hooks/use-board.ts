@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RoomEvent, type RemoteParticipant } from 'livekit-client';
+import { type RemoteParticipant, RoomEvent } from 'livekit-client';
 import { useRoomContext } from '@livekit/components-react';
-
 import type { BoardOp } from '@/lib/board-ops';
 import { applyBoardMessage } from '@/lib/board-reducer';
 

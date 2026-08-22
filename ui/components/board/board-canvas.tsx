@@ -2,9 +2,8 @@
 
 import { useMemo } from 'react';
 import katex from 'katex';
-import { parse as parseMath } from 'mathjs';
 import 'katex/dist/katex.min.css';
-
+import { parse as parseMath } from 'mathjs';
 import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
@@ -23,8 +22,7 @@ import { renderGeometryShape } from './geometry-shapes';
 
 const CHALK = '#f2efe4';
 const CHALK_FADED = 'rgba(242, 239, 228, 0.45)';
-const BOARD_FONT =
-  "'Bradley Hand', 'Segoe Print', 'Comic Sans MS', cursive";
+const BOARD_FONT = "'Bradley Hand', 'Segoe Print', 'Comic Sans MS', cursive";
 
 interface Rect {
   x: number;
@@ -64,7 +62,12 @@ function estimateOpRect(op: BoardOp, graphIndex: Map<number, number>): Rect | nu
       if (op.shape === 'rect')
         return { x: op.position[0], y: op.position[1], width: op.size, height: op.size };
       const half = op.size / 2;
-      return { x: op.position[0] - half, y: op.position[1] - half, width: op.size, height: op.size };
+      return {
+        x: op.position[0] - half,
+        y: op.position[1] - half,
+        width: op.size,
+        height: op.size,
+      };
     }
     case 'line':
       return {
@@ -138,13 +141,11 @@ function sampleFunction(expr: string, domain: [number, number], box: Rect): Samp
     const sx = (x: number) =>
       box.x +
       margin.left +
-      ((x - domain[0]) / (domain[1] - domain[0])) *
-        (box.width - margin.left - margin.right);
+      ((x - domain[0]) / (domain[1] - domain[0])) * (box.width - margin.left - margin.right);
     const sy = (y: number) =>
       box.y +
       margin.top +
-      (1 - (y - yMin) / (yMax - yMin)) *
-        (box.height - margin.top - margin.bottom);
+      (1 - (y - yMin) / (yMax - yMin)) * (box.height - margin.top - margin.bottom);
 
     let path = '';
     let penDown = false;
@@ -176,11 +177,36 @@ function GraphView({ op, index }: { op: GraphOp; index: number }) {
         <line x1={box.x} y1={cy} x2={box.x + box.width} y2={cy} stroke={CHALK_FADED} />
         <line x1={cx} y1={box.y} x2={cx} y2={box.y + box.height} stroke={CHALK_FADED} />
         <circle cx={cx} cy={cy} r={r} />
-        <line x1={cx} y1={cy} x2={cx + r * Math.SQRT1_2} y2={cy - r * Math.SQRT1_2} strokeDasharray="5 5" />
-        <circle cx={cx + r * Math.SQRT1_2} cy={cy - r * Math.SQRT1_2} r={3.5} fill={CHALK} stroke="none" />
-        <text x={cx + r + 8} y={cy + 4} fill={CHALK} fontSize={15} fontFamily={BOARD_FONT}>{"(1, 0)"}</text>
-        <text x={cx + 6} y={cy - r - 6} fill={CHALK} fontSize={15} fontFamily={BOARD_FONT}>{"(0, 1)"}</text>
-        <text x={cx + 34} y={cy - 42} fill={CHALK} fontSize={14} fontFamily={BOARD_FONT} opacity={0.85}>θ</text>
+        <line
+          x1={cx}
+          y1={cy}
+          x2={cx + r * Math.SQRT1_2}
+          y2={cy - r * Math.SQRT1_2}
+          strokeDasharray="5 5"
+        />
+        <circle
+          cx={cx + r * Math.SQRT1_2}
+          cy={cy - r * Math.SQRT1_2}
+          r={3.5}
+          fill={CHALK}
+          stroke="none"
+        />
+        <text x={cx + r + 8} y={cy + 4} fill={CHALK} fontSize={15} fontFamily={BOARD_FONT}>
+          {'(1, 0)'}
+        </text>
+        <text x={cx + 6} y={cy - r - 6} fill={CHALK} fontSize={15} fontFamily={BOARD_FONT}>
+          {'(0, 1)'}
+        </text>
+        <text
+          x={cx + 34}
+          y={cy - 42}
+          fill={CHALK}
+          fontSize={14}
+          fontFamily={BOARD_FONT}
+          opacity={0.85}
+        >
+          θ
+        </text>
       </g>
     );
   }
@@ -192,7 +218,15 @@ function GraphView({ op, index }: { op: GraphOp; index: number }) {
     const end = box.x + box.width - 40;
     return (
       <g key={op.seq}>
-        <line x1={start - 20} y1={yMid} x2={end + 24} y2={yMid} stroke={CHALK} strokeWidth={2.5} strokeLinecap="round" />
+        <line
+          x1={start - 20}
+          y1={yMid}
+          x2={end + 24}
+          y2={yMid}
+          stroke={CHALK}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+        />
         <path d={`M ${end + 24} ${yMid} l -10 -5 v 10 z`} fill={CHALK} />
         {Array.from({ length: ticks + 1 }, (_, i) => {
           const tx = start + ((end - start) * i) / ticks;
@@ -200,7 +234,14 @@ function GraphView({ op, index }: { op: GraphOp; index: number }) {
           return (
             <g key={i}>
               <line x1={tx} y1={yMid - 7} x2={tx} y2={yMid + 7} stroke={CHALK} />
-              <text x={tx} y={yMid + 26} textAnchor="middle" fill={CHALK} fontSize={13} fontFamily={BOARD_FONT}>
+              <text
+                x={tx}
+                y={yMid + 26}
+                textAnchor="middle"
+                fill={CHALK}
+                fontSize={13}
+                fontFamily={BOARD_FONT}
+              >
                 {Math.round(value * 100) / 100}
               </text>
             </g>
@@ -214,7 +255,14 @@ function GraphView({ op, index }: { op: GraphOp; index: number }) {
 
   return (
     <g key={op.seq}>
-      <text x={box.x + 2} y={box.y + 18} fill={CHALK} fontSize={17} fontFamily={BOARD_FONT} opacity={0.9}>
+      <text
+        x={box.x + 2}
+        y={box.y + 18}
+        fill={CHALK}
+        fontSize={17}
+        fontFamily={BOARD_FONT}
+        opacity={0.9}
+      >
         y = {op.expr}
       </text>
       <rect
@@ -234,18 +282,22 @@ function GraphView({ op, index }: { op: GraphOp; index: number }) {
             <ZeroLine box={box} horizontal fraction={(0 - plot.yMin) / (plot.yMax - plot.yMin)} />
           )}
           {op.domain[0] < 0 && op.domain[1] > 0 && (
-            <ZeroLine
-              box={box}
-              fraction={(0 - op.domain[0]) / (op.domain[1] - op.domain[0])}
-            />
+            <ZeroLine box={box} fraction={(0 - op.domain[0]) / (op.domain[1] - op.domain[0])} />
           )}
         </>
       )}
       {plot.valid ? (
         <path d={plot.path} fill="none" stroke="#ffd66e" strokeWidth={3} strokeLinecap="round" />
       ) : (
-        <text x={box.x + box.width / 2} y={box.y + box.height / 2} textAnchor="middle" fill={CHALK} fontSize={16} fontFamily={BOARD_FONT}>
-          cannot plot "{op.expr}"
+        <text
+          x={box.x + box.width / 2}
+          y={box.y + box.height / 2}
+          textAnchor="middle"
+          fill={CHALK}
+          fontSize={16}
+          fontFamily={BOARD_FONT}
+        >
+          cannot plot &quot;{op.expr}&quot;
         </text>
       )}
     </g>
@@ -272,7 +324,12 @@ function ZeroLine({
 /* ---------------------------------- views ---------------------------------- */
 
 function ShapeView({ op }: { op: ShapeOp }) {
-  const common = { stroke: op.color || CHALK, strokeWidth: 3, vectorEffect: 'non-scaling-stroke' as const, fill: 'none' };
+  const common = {
+    stroke: op.color || CHALK,
+    strokeWidth: 3,
+    vectorEffect: 'non-scaling-stroke' as const,
+    fill: 'none',
+  };
   if (op.shape === 'rect')
     return (
       <rect
@@ -297,7 +354,9 @@ function ShapeView({ op }: { op: ShapeOp }) {
       />
     );
   }
-  return <circle key={op.seq} cx={op.position[0]} cy={op.position[1]} r={op.size / 2} {...common} />;
+  return (
+    <circle key={op.seq} cx={op.position[0]} cy={op.position[1]} r={op.size / 2} {...common} />
+  );
 }
 
 function LineView({ op }: { op: LineOp }) {
@@ -350,8 +409,6 @@ function LatexView({ op }: { op: LatexOp }) {
       height={70}
     >
       <div
-        xmlns="http://www.w3.org/1999/xhtml"
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: html }}
         style={{ color: CHALK, fontSize: (op.fontSize ?? 21) + 'px', lineHeight: 1 }}
       />
@@ -378,13 +435,7 @@ function GeometryView({ op }: { op: GeometryOp }) {
   );
 }
 
-function HighlightView({
-  op,
-  rect,
-}: {
-  op: HighlightOp;
-  rect: Rect | null;
-}) {
+function HighlightView({ op, rect }: { op: HighlightOp; rect: Rect | null }) {
   if (!rect) return null;
   const pad = 10;
   return (
@@ -459,7 +510,12 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
             </feMerge>
           </filter>
           <pattern id="board-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(242,239,228,0.05)" strokeWidth="1" />
+            <path
+              d="M 40 0 L 0 0 0 40"
+              fill="none"
+              stroke="rgba(242,239,228,0.05)"
+              strokeWidth="1"
+            />
           </pattern>
         </defs>
 
@@ -485,7 +541,7 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
         })}
 
         {highlights.map((op) => (
-          <HighlightView op={op} rect={rectBySeq.get(op.targetSeq) ?? null} />
+          <HighlightView key={op.seq} op={op} rect={rectBySeq.get(op.targetSeq) ?? null} />
         ))}
       </svg>
 
@@ -500,7 +556,7 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
         </div>
       )}
 
-      <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-3 py-1 backdrop-blur-sm">
+      <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-3 py-1 backdrop-blur-sm">
         <span className="size-2 rounded-full bg-emerald-400/80" aria-hidden />
         <span className="text-xs font-medium tracking-wide text-white/70">
           Blackboard · {items.length} item{items.length === 1 ? '' : 's'}
