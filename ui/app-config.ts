@@ -33,20 +33,20 @@ export interface AppConfig {
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
-  companyName: 'LiveKit',
-  pageTitle: 'LiveKit Voice Agent',
-  pageDescription: 'A voice agent built with LiveKit',
+  companyName: 'Blackboard Tutor',
+  pageTitle: 'Blackboard Tutor',
+  pageDescription: 'A voice AI tutor that explains topics visually on a live blackboard',
 
   supportsChatInput: true,
   supportsVideoInput: true,
   supportsScreenShare: true,
   isPreConnectBufferEnabled: true,
 
-  logo: '/lk-logo.svg',
-  accent: '#002cf2',
-  logoDark: '/lk-logo-dark.svg',
-  accentDark: '#1fd5f9',
-  startButtonText: 'Start call',
+  logo: '/blackboard-logo.svg',
+  accent: '#2f7d5b',
+  logoDark: '/blackboard-logo-dark.svg',
+  accentDark: '#3ddc97',
+  startButtonText: 'Start learning',
 
   // optional: audio visualization configuration
   // audioVisualizerType: 'bar',

@@ -42,7 +42,7 @@ class Assistant(Agent):
         super().__init__(
             # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
             # See all available models at https://docs.livekit.io/agents/models/llm/
-            llm=inference.LLM(model="google/gemma-4-31b-it"),
+            llm=inference.LLM(model="openai/gpt-5.4-mini"),
             tools=[
                 draw_shape,
                 draw_line,

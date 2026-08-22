@@ -248,7 +248,11 @@ async def write_next(
     op_kind = "text" if kind == "text" else "latex"
     op = await board_state.emit_op(
         get_job_context().room,
-        {"kind": op_kind, "content": content, "position": [position["x"], position["y"]]},
+        {
+            "kind": op_kind,
+            "content": content,
+            "position": [position["x"], position["y"]],
+        },
     )
     return f"Wrote '{content}' (item #{op['seq']})"
 
@@ -271,8 +275,10 @@ async def point_to(
         note: Optional short caption spoken alongside, e.g. "this coefficient"
     """
     if style not in POINT_STYLES:
-        raise ToolError(f"Unknown style '{style}'. Use one of: {', '.join(POINT_STYLES)}.")
-    op = await board_state.emit_effect(
+        raise ToolError(
+            f"Unknown style '{style}'. Use one of: {', '.join(POINT_STYLES)}."
+        )
+    await board_state.emit_effect(
         get_job_context().room,
         {
             "kind": "point_to",
@@ -305,7 +311,9 @@ async def label(
         offset: Distance in pixels away from the item
     """
     if anchor not in LABEL_ANCHORS:
-        raise ToolError(f"Unknown anchor '{anchor}'. Use one of: {', '.join(LABEL_ANCHORS)}.")
+        raise ToolError(
+            f"Unknown anchor '{anchor}'. Use one of: {', '.join(LABEL_ANCHORS)}."
+        )
     op = await board_state.emit_op(
         get_job_context().room,
         {

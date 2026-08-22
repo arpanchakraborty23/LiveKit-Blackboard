@@ -46,6 +46,7 @@ class FakeJobContext:
 def clean_state():
     board_state._seq_counters.clear()
     board_state._board_ops.clear()
+    board_state._flow_cursors.clear()
     yield
 
 
@@ -205,3 +206,125 @@ async def test_clear_board_resets_state(room):
     assert board_state.get_snapshot(room.name) == []
     last_sent = room.local_participant.published[-1]["payload"]
     assert last_sent == {"type": "op", "op": {"kind": "clear"}}
+
+
+# --- flow cursor ---
+
+
+async def test_flow_cursor_advances_line_by_line():
+    first = board_state.advance_flow_cursor("r", 100, 44)
+    second = board_state.advance_flow_cursor("r", 100, 44)
+
+    assert first["x"] == second["x"] == board_state.CURSOR_MARGIN_X
+    assert second["y"] > first["y"]
+
+
+async def test_flow_cursor_wraps_to_second_column():
+    for _ in range(20):
+        board_state.advance_flow_cursor("r", 200, 44)
+    pos = board_state.advance_flow_cursor("r", 200, 44)
+
+    assert pos["x"] > board_state.BOARD_WIDTH / 2
+    assert pos["y"] >= board_state.CURSOR_MARGIN_TOP
+
+
+async def test_broadcast_clear_resets_flow_cursor(room):
+    board_state.advance_flow_cursor(room.name, 300, 44)
+    high = board_state.get_flow_cursor(room.name)["y"]
+    await board_state.broadcast_clear(room)
+
+    assert board_state.get_flow_cursor(room.name)["y"] < high
+    assert board_state.get_flow_cursor(room.name)["y"] == board_state.CURSOR_MARGIN_TOP
+
+
+async def test_write_next_flows_without_coordinates(room):
+    first = await board_tools.write_next(None, content="step one")
+    second = await board_tools.write_next(None, content="step two")
+
+    first_op = room.local_participant.published[0]["payload"]["op"]
+    second_op = room.local_participant.published[1]["payload"]["op"]
+    assert first_op["kind"] == "text"
+    assert first_op["position"][0] == second_op["position"][0]
+    assert (
+        second_op["position"][1] - first_op["position"][1]
+        == board_state.CURSOR_LINE_HEIGHT
+    )
+    assert "#1" in first and "#2" in second
+
+    # both items are persisted in history (unlike effects)
+    assert len(board_state.get_snapshot(room.name)) == 2
+
+
+async def test_write_next_supports_latex_and_rejects_bad_kind(room):
+    await board_tools.write_next(None, content="x^2", kind="latex")
+
+    sent = room.local_participant.published[0]["payload"]["op"]
+    assert sent["kind"] == "latex"
+    assert sent["content"] == "x^2"
+
+    with pytest.raises(ToolError):
+        await board_tools.write_next(None, content="hi", kind="markdown")
+
+
+# --- point_to / label / erase ---
+
+
+async def test_point_to_is_transient_not_persisted(room):
+    await board_tools.draw_shape(None, shape="circle", x=10, y=10, size=40)
+
+    result = await board_tools.point_to(
+        None, target_seq=1, style="arrow", note="radius"
+    )
+
+    sent = room.local_participant.published[-1]["payload"]
+    assert sent["type"] == "effect"
+    assert sent["op"]["kind"] == "point_to"
+    assert sent["op"]["targetSeq"] == 1
+    assert sent["op"]["style"] == "arrow"
+    assert sent["op"]["ttlMs"] == board_state.effect_ttl_ms()
+    assert "radius" in result
+    # effects never enter board history / snapshots
+    assert [op["kind"] for op in board_state.get_snapshot(room.name)] == ["shape"]
+
+    with pytest.raises(ToolError):
+        await board_tools.point_to(None, target_seq=1, style="sparkle")
+
+
+async def test_label_anchors_to_item(room):
+    await board_tools.draw_shape(None, shape="rect", x=0, y=0, size=50)
+
+    result = await board_tools.label(
+        None, target_seq=1, content="hypotenuse", anchor="right", offset=12
+    )
+
+    sent = room.local_participant.published[-1]["payload"]["op"]
+    assert sent["kind"] == "label"
+    assert sent["targetSeq"] == 1
+    assert sent["anchor"] == "right"
+    assert sent["offset"] == 12
+    assert "#2" in result
+    assert len(board_state.get_snapshot(room.name)) == 2
+
+    with pytest.raises(ToolError):
+        await board_tools.label(None, target_seq=1, content="x", anchor="diagonal")
+
+
+async def test_erase_removes_only_targeted_item(room):
+    await board_tools.draw_shape(None, shape="circle", x=0, y=0, size=10)
+    await board_tools.write_text(None, content="keep me", x=5, y=5)
+
+    result = await board_tools.erase(None, target_seq=1)
+
+    assert result == "Erased item #1"
+    snapshot = board_state.get_snapshot(room.name)
+    assert [op["seq"] for op in snapshot] == [2]
+
+    sent = room.local_participant.published[-1]["payload"]
+    assert sent == {"type": "erase", "targetSeq": 1}
+
+
+async def test_erase_unknown_item_is_noop(room):
+    result = await board_tools.erase(None, target_seq=99)
+
+    assert result == "Item #99 is not on the board"
+    assert room.local_participant.published == []

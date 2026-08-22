@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { parse as parseMath } from 'mathjs';
@@ -11,11 +11,14 @@ import {
   type GeometryOp,
   type GraphOp,
   type HighlightOp,
+  type LabelOp,
   type LatexOp,
   type LineOp,
+  type PointToOp,
   type ShapeOp,
   type TextOp,
   isHighlightOp,
+  isPointToOp,
 } from '@/lib/board-ops';
 import { cn } from '@/lib/shadcn/utils';
 import { renderGeometryShape } from './geometry-shapes';
@@ -23,6 +26,42 @@ import { renderGeometryShape } from './geometry-shapes';
 const CHALK = '#f2efe4';
 const CHALK_FADED = 'rgba(242, 239, 228, 0.45)';
 const BOARD_FONT = "'Bradley Hand', 'Segoe Print', 'Comic Sans MS', cursive";
+
+/** Client-side expiry for pointer effects when the agent omits ttlMs. */
+const EFFECT_TTL_FALLBACK_MS = 6000;
+
+/* Entrance/reveal animations (fade + scale + drift), adapted from OpenMAIC's
+   AnimatedElementBase curve — simplified to CSS keyframes on SVG groups. */
+const BOARD_CSS = `
+  .board-item-enter {
+    animation: board-enter 450ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @keyframes board-enter {
+    from { opacity: 0; transform: translateY(8px) scale(0.92); filter: blur(4px); }
+    to   { opacity: 1; transform: translateY(0) scale(1);     filter: blur(0); }
+  }
+  .board-fade-in { animation: board-fade-in 300ms ease-out backwards; }
+  @keyframes board-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .board-pop-in {
+    animation: board-pop-in 350ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  @keyframes board-pop-in {
+    from { opacity: 0; transform: scale(0.6); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .board-pointer-draw {
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: board-draw 500ms ease-out forwards;
+  }
+  @keyframes board-draw { to { stroke-dashoffset: 0; } }
+  .board-effect { animation: board-fade-in 250ms ease-out; }
+`;
 
 interface Rect {
   x: number;
@@ -466,6 +505,166 @@ function HighlightView({ op, rect }: { op: HighlightOp; rect: Rect | null }) {
   );
 }
 
+/* ------------------------- transient pointer effects ----------------------- */
+/* Adapted from OpenMAIC's spotlight/laser pattern: the op only references a
+   target element; the renderer resolves its bounding box and renders an
+   overlay that self-expires (see EFFECT_TTL_FALLBACK_MS + ts stamping in the
+   reducer). Effects are never part of persistent board content. */
+
+const POINTER_COLOR = '#ffd66e';
+
+function arrowTargetPoint(rect: Rect): { from: [number, number]; to: [number, number] } {
+  // Come in from the left margin toward the vertical center of the target.
+  const toX = rect.x - 8;
+  const toY = rect.y + rect.height / 2;
+  const fromX = Math.max(24, rect.x - rect.width / 2 - 90);
+  const fromY = Math.max(30, toY - 60);
+  return { from: [fromX, fromY], to: [toX, toY] };
+}
+
+function PointToView({ op, rect }: { op: PointToOp; rect: Rect | null }) {
+  if (!rect) return null;
+  const cx = rect.x + rect.width / 2;
+  const cy = rect.y + rect.height / 2;
+
+  let shape: React.ReactNode = null;
+  if (op.style === 'arrow') {
+    const { from, to } = arrowTargetPoint(rect);
+    shape = (
+      <>
+        <line
+          x1={from[0]}
+          y1={from[1]}
+          x2={to[0]}
+          y2={to[1]}
+          stroke={POINTER_COLOR}
+          strokeWidth={3.5}
+          strokeLinecap="round"
+          className="board-pointer-draw"
+        />
+        {/* arrowhead */}
+        <path
+          d={`M ${to[0]} ${to[1]} l -12 -6 l 3 6 l -3 6 Z`}
+          fill={POINTER_COLOR}
+          className="board-fade-in"
+        />
+      </>
+    );
+  } else if (op.style === 'circle') {
+    shape = (
+      <ellipse
+        cx={cx}
+        cy={cy}
+        rx={rect.width / 2 + 16}
+        ry={rect.height / 2 + 12}
+        stroke={POINTER_COLOR}
+        strokeWidth={3.5}
+        fill="none"
+        filter="url(#board-glow)"
+        className="board-pop-in"
+        style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+      />
+    );
+  } else if (op.style === 'underline') {
+    shape = (
+      <path
+        d={`M ${rect.x - 4} ${rect.y + rect.height + 8} Q ${cx} ${rect.y + rect.height + 18} ${
+          rect.x + rect.width + 4
+        } ${rect.y + rect.height + 8}`}
+        stroke={POINTER_COLOR}
+        strokeWidth={4}
+        strokeLinecap="round"
+        fill="none"
+        className="board-pointer-draw"
+      />
+    );
+  } else {
+    const pad = 8;
+    shape = (
+      <rect
+        x={rect.x - pad}
+        y={rect.y - pad}
+        width={rect.width + pad * 2}
+        height={rect.height + pad * 2}
+        rx={10}
+        stroke={POINTER_COLOR}
+        strokeWidth={3.5}
+        strokeDasharray="10 7"
+        fill="none"
+        filter="url(#board-glow)"
+        className="board-fade-in"
+      />
+    );
+  }
+
+  return (
+    <g key={op.seq} className="board-effect">
+      {shape}
+      {op.note && (
+        <text
+          x={Math.min(Math.max(cx, 60), BOARD_WIDTH - 60)}
+          y={Math.max(rect.y - 14, 20)}
+          textAnchor="middle"
+          fill={POINTER_COLOR}
+          fontSize={16}
+          fontFamily={BOARD_FONT}
+          className="board-fade-in"
+        >
+          {op.note}
+        </text>
+      )}
+    </g>
+  );
+}
+
+function LabelView({ op, rect }: { op: LabelOp; rect: Rect | null }) {
+  if (!rect) return null;
+  const offset = op.offset ?? 10;
+  const fontSize = op.fontSize ?? 15;
+
+  let x = rect.x;
+  let y = rect.y;
+  let anchor: 'start' | 'middle' | 'end' = 'start';
+  switch (op.anchor) {
+    case 'top':
+      x = rect.x + rect.width / 2;
+      y = rect.y - offset - 4;
+      anchor = 'middle';
+      break;
+    case 'bottom':
+      x = rect.x + rect.width / 2;
+      y = rect.y + rect.height + offset + fontSize;
+      anchor = 'middle';
+      break;
+    case 'left':
+      x = rect.x - offset;
+      y = rect.y + rect.height / 2 + fontSize / 3;
+      anchor = 'end';
+      break;
+    case 'right':
+      x = rect.x + rect.width + offset;
+      y = rect.y + rect.height / 2 + fontSize / 3;
+      anchor = 'start';
+      break;
+  }
+
+  return (
+    <g key={op.seq} className="board-item-enter">
+      <text
+        x={x}
+        y={y}
+        textAnchor={anchor}
+        fill="#a8e6a1"
+        fontSize={fontSize}
+        fontFamily={BOARD_FONT}
+        fontStyle="italic"
+      >
+        {op.content}
+      </text>
+    </g>
+  );
+}
+
 /* ---------------------------------- canvas --------------------------------- */
 
 export interface BoardCanvasProps {
@@ -474,9 +673,25 @@ export interface BoardCanvasProps {
 }
 
 export function BoardCanvas({ ops, className }: BoardCanvasProps) {
-  const items = ops.filter((op) => op.kind !== 'clear' && !isHighlightOp(op));
+  const items = ops.filter((op) => op.kind !== 'clear' && !isHighlightOp(op) && !isPointToOp(op));
   const highlights = ops.filter(isHighlightOp);
   const graphIndex = useMemo(() => buildGraphIndex(ops), [ops]);
+
+  // Transient pointer effects expire client-side (OpenMAIC's auto-clear), so we
+  // need a ticking clock while any effect is on screen to re-render on expiry.
+  const effects = ops.filter(isPointToOp);
+  const [now, setNow] = useState(() => Date.now());
+  const hasLiveEffect = effects.some(
+    (e) => now - (e.ts ?? 0) < (e.ttlMs ?? EFFECT_TTL_FALLBACK_MS)
+  );
+  useEffect(() => {
+    if (!hasLiveEffect) return;
+    const timer = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(timer);
+  }, [hasLiveEffect]);
+  const liveEffects = effects.filter(
+    (e) => now - (e.ts ?? 0) < (e.ttlMs ?? EFFECT_TTL_FALLBACK_MS)
+  );
 
   const rectBySeq = useMemo(() => {
     const map = new Map<number, Rect>();
@@ -502,6 +717,7 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
         aria-label="Shared blackboard drawn by the voice agent"
       >
         <defs>
+          <style>{BOARD_CSS}</style>
           <filter id="board-glow" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feMerge>
@@ -524,24 +740,62 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
         {items.map((op) => {
           switch (op.kind) {
             case 'shape':
-              return <ShapeView op={op} />;
+              return (
+                <g key={op.seq} className="board-item-enter">
+                  <ShapeView op={op} />
+                </g>
+              );
             case 'line':
-              return <LineView op={op} />;
+              return (
+                <g key={op.seq} className="board-item-enter">
+                  <LineView op={op} />
+                </g>
+              );
             case 'text':
-              return <TextView op={op} />;
+              return (
+                <g key={op.seq} className="board-item-enter">
+                  <TextView op={op} />
+                </g>
+              );
             case 'latex':
-              return <LatexView op={op} />;
+              return (
+                <g key={op.seq} className="board-item-enter">
+                  <LatexView op={op} />
+                </g>
+              );
             case 'graph':
-              return <GraphView op={op} index={graphIndex.get(op.seq) ?? 0} />;
+              return (
+                <g key={op.seq} className="board-item-enter">
+                  <GraphView op={op} index={graphIndex.get(op.seq) ?? 0} />
+                </g>
+              );
             case 'geometry':
-              return <GeometryView op={op} />;
+              return (
+                <g key={op.seq} className="board-item-enter">
+                  <GeometryView op={op} />
+                </g>
+              );
+            case 'label':
+              return null; // rendered below, anchored to its target rect
             default:
               return null;
           }
         })}
 
+        {/* anchored labels — resolved against their target's bounding box */}
+        {items
+          .filter((op): op is LabelOp => op.kind === 'label')
+          .map((op) => (
+            <LabelView key={op.seq} op={op} rect={rectBySeq.get(op.targetSeq) ?? null} />
+          ))}
+
         {highlights.map((op) => (
           <HighlightView key={op.seq} op={op} rect={rectBySeq.get(op.targetSeq) ?? null} />
+        ))}
+
+        {/* transient pointer overlays — on top of everything */}
+        {liveEffects.map((op) => (
+          <PointToView key={op.seq} op={op} rect={rectBySeq.get(op.targetSeq) ?? null} />
         ))}
       </svg>
 

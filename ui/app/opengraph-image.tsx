@@ -92,7 +92,7 @@ function scaleImageSize(size: { width: number; height: number }, desiredHeight: 
 
 function cleanPageTitle(appName: string) {
   if (appName === APP_CONFIG_DEFAULTS.pageTitle) {
-    return 'Voice agent';
+    return 'AI voice tutor';
   }
 
   return appName;

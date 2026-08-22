@@ -33,7 +33,9 @@ CURSOR_CHAR_WIDTH = 11  # rough advance per character at fontSize 24
 CURSOR_MAX_LINE_CHARS = int((BOARD_WIDTH - CURSOR_MARGIN_X * 2) / CURSOR_CHAR_WIDTH)
 # When a column fills up, move to the next column instead of falling off-board
 CURSOR_COLUMN_GAP = 40
-CURSOR_COLUMN_WIDTH = (BOARD_WIDTH - CURSOR_MARGIN_X * 2 - CURSOR_COLUMN_GAP) / 2 + CURSOR_COLUMN_GAP
+CURSOR_COLUMN_WIDTH = (
+    BOARD_WIDTH - CURSOR_MARGIN_X * 2 - CURSOR_COLUMN_GAP
+) / 2 + CURSOR_COLUMN_GAP
 
 _seq_counters: dict[str, itertools.count[int]] = {}
 _board_ops: dict[str, list[dict[str, Any]]] = {}
@@ -84,7 +86,9 @@ def get_flow_cursor(room_name: str) -> dict[str, float]:
     return dict(cursor)
 
 
-def advance_flow_cursor(room_name: str, content_width: float, line_height: float) -> dict[str, float]:
+def advance_flow_cursor(
+    room_name: str, content_width: float, line_height: float
+) -> dict[str, float]:
     """Advance the cursor after writing something of content_width wide.
 
     Moves to the next line when the item would cross the right margin; moves to
@@ -95,15 +99,20 @@ def advance_flow_cursor(room_name: str, content_width: float, line_height: float
         room_name, {"x": CURSOR_MARGIN_X, "y": CURSOR_MARGIN_TOP}
     )
 
-    if cursor["x"] + content_width > BOARD_WIDTH - CURSOR_MARGIN_X and cursor["x"] > CURSOR_MARGIN_X:
+    if (
+        cursor["x"] + content_width > BOARD_WIDTH - CURSOR_MARGIN_X
+        and cursor["x"] > CURSOR_MARGIN_X
+    ):
         cursor["x"] = CURSOR_MARGIN_X
         cursor["y"] += line_height
 
     if cursor["y"] > BOARD_HEIGHT - CURSOR_MARGIN_TOP / 2:
         # wrap to the top of the second column
-        cursor["x"] = CURSOR_MARGIN_X + (
-            BOARD_WIDTH - CURSOR_MARGIN_X * 2 - CURSOR_COLUMN_GAP
-        ) / 2 + CURSOR_COLUMN_GAP
+        cursor["x"] = (
+            CURSOR_MARGIN_X
+            + (BOARD_WIDTH - CURSOR_MARGIN_X * 2 - CURSOR_COLUMN_GAP) / 2
+            + CURSOR_COLUMN_GAP
+        )
         cursor["y"] = CURSOR_MARGIN_TOP
 
     position = {"x": cursor["x"], "y": cursor["y"]}
