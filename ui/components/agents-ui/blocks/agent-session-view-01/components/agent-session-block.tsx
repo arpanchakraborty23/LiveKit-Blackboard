@@ -2,14 +2,21 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, type MotionProps, motion } from 'motion/react';
-import { useAgent, useSessionContext, useSessionMessages } from '@livekit/components-react';
+import {
+  useAgent,
+  useSessionContext,
+  useSessionMessages,
+  useVoiceAssistant,
+} from '@livekit/components-react';
+import { AgentAudioVisualizerBar } from '@/components/agents-ui/agent-audio-visualizer-bar';
 import { AgentChatTranscript } from '@/components/agents-ui/agent-chat-transcript';
 import {
   AgentControlBar,
   type AgentControlBarControls,
 } from '@/components/agents-ui/agent-control-bar';
+import { BoardCanvas } from '@/components/board/board-canvas';
+import { useBoard } from '@/hooks/use-board';
 import { cn } from '@/lib/shadcn/utils';
-import { TileLayout } from './tile-view';
 
 const BOTTOM_VIEW_MOTION_PROPS: MotionProps = {
   variants: {
@@ -79,32 +86,7 @@ const SHIMMER_MOTION_PROPS: MotionProps = {
   exit: 'hidden',
 };
 
-interface FadeProps {
-  top?: boolean;
-  bottom?: boolean;
-  className?: string;
-}
-
-export function Fade({ top = false, bottom = false, className }: FadeProps) {
-  return (
-    <div
-      className={cn(
-        'from-background pointer-events-none h-4 bg-linear-to-b to-transparent',
-        top && 'bg-linear-to-b',
-        bottom && 'bg-linear-to-t',
-        className
-      )}
-    />
-  );
-}
-
 export interface AgentSessionView_01Props {
-  /**
-   * Theme mode forwarded to the aura visualizer (`audioVisualizerType="aura"`) so
-   * the shader's blend mode adapts to the theme mode.
-   * Ignored by other visualizer types.
-   */
-  themeMode?: 'dark' | 'light';
   /**
    * Message shown above the controls before the first chat message is sent.
    *
@@ -136,24 +118,6 @@ export interface AgentSessionView_01Props {
    */
   isPreConnectBufferEnabled?: boolean;
 
-  /** Selects the visualizer style rendered in the main tile area. */
-  audioVisualizerType?: 'bar' | 'wave' | 'grid' | 'radial' | 'aura';
-  /** Primary hex color used by supported audio visualizer variants. */
-  audioVisualizerColor?: `#${string}`;
-  /** Hue shift intensity used by certain visualizers. */
-  audioVisualizerColorShift?: number;
-  /** Number of bars to render when `audioVisualizerType` is `bar`. */
-  audioVisualizerBarCount?: number;
-  /** Number of rows in the visualizer when `audioVisualizerType` is `grid`. */
-  audioVisualizerGridRowCount?: number;
-  /** Number of columns in the visualizer when `audioVisualizerType` is `grid`. */
-  audioVisualizerGridColumnCount?: number;
-  /** Number of radial bars when `audioVisualizerType` is `radial`. */
-  audioVisualizerRadialBarCount?: number;
-  /** Base radius of the radial visualizer when `audioVisualizerType` is `radial`. */
-  audioVisualizerRadialRadius?: number;
-  /** Stroke width of the wave path when `audioVisualizerType` is `wave`. */
-  audioVisualizerWaveLineWidth?: number;
   /** Optional class name merged onto the outer `<section>` container. */
   className?: string;
 }
@@ -164,16 +128,6 @@ export function AgentSessionView_01({
   supportsVideoInput = true,
   supportsScreenShare = true,
   isPreConnectBufferEnabled = true,
-  audioVisualizerType,
-  audioVisualizerColor,
-  audioVisualizerColorShift,
-  audioVisualizerBarCount,
-  audioVisualizerGridRowCount,
-  audioVisualizerGridColumnCount,
-  audioVisualizerRadialBarCount,
-  audioVisualizerRadialRadius,
-  audioVisualizerWaveLineWidth,
-  themeMode,
   ref,
   className,
   ...props
@@ -183,6 +137,8 @@ export function AgentSessionView_01({
   const [isChatOpen, setIsChatOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { state: agentState } = useAgent();
+  const { audioTrack } = useVoiceAssistant();
+  const boardOps = useBoard();
 
   const controls: AgentControlBarControls = {
     leave: true,
@@ -207,7 +163,39 @@ export function AgentSessionView_01({
       className={cn('bg-background relative z-10 h-full w-full overflow-hidden', className)}
       {...props}
     >
-      <Fade top className="absolute inset-x-4 top-0 z-10 h-40" />
+      {/* Blackboard */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="absolute inset-x-2 top-2 bottom-[135px] sm:inset-x-4 md:inset-x-10 md:bottom-[170px]"
+      >
+        <BoardCanvas ops={boardOps} />
+      </motion.div>
+
+      {/* Voice status pill */}
+      <AnimatePresence>
+        {!isChatOpen && (
+          <motion.div
+            {...SHIMMER_MOTION_PROPS}
+            className="pointer-events-none absolute top-4 right-4 z-30 md:top-5 md:right-12"
+          >
+            <div className="flex items-center gap-3 rounded-full border border-white/10 bg-black/35 px-4 py-2 backdrop-blur-sm">
+              <AgentAudioVisualizerBar
+                size="sm"
+                state={agentState}
+                audioTrack={audioTrack}
+                color="#6ee7b7"
+                className="h-4 w-24 text-emerald-200/90 **:data-[slot=bar]:w-[3px]"
+              />
+              <span className="text-xs font-medium text-white/70">
+                {agentState === 'speaking' ? 'Tutor is explaining…' : 'Listening'}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* transcript */}
       <AnimatePresence>
         {isChatOpen && (
@@ -215,29 +203,16 @@ export function AgentSessionView_01({
             {...CHAT_MOTION_PROPS}
             className="absolute inset-x-0 top-0 bottom-[135px] overflow-hidden md:bottom-[170px]"
           >
+            <div className="from-background absolute inset-x-0 top-0 z-10 h-16 bg-linear-to-b to-transparent" />
             <AgentChatTranscript
               agentState={agentState}
               messages={messages}
-              className="mx-auto max-w-2xl **:data-[slot=message-scroller-content]:p-4 **:data-[slot=message-scroller-content]:pt-40! md:**:data-[slot=message-scroller-content]:p-6"
+              className="mx-auto max-w-2xl **:data-[slot=message-scroller-content]:p-4 **:data-[slot=message-scroller-content]:pt-24! md:**:data-[slot=message-scroller-content]:p-6"
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Tile layout */}
-      <TileLayout
-        isChatOpen={isChatOpen}
-        themeMode={themeMode}
-        audioVisualizerType={audioVisualizerType}
-        audioVisualizerColor={audioVisualizerColor}
-        audioVisualizerColorShift={audioVisualizerColorShift}
-        audioVisualizerBarCount={audioVisualizerBarCount}
-        audioVisualizerRadialBarCount={audioVisualizerRadialBarCount}
-        audioVisualizerRadialRadius={audioVisualizerRadialRadius}
-        audioVisualizerGridRowCount={audioVisualizerGridRowCount}
-        audioVisualizerGridColumnCount={audioVisualizerGridColumnCount}
-        audioVisualizerWaveLineWidth={audioVisualizerWaveLineWidth}
-      />
       {/* Bottom */}
       <motion.div
         {...BOTTOM_VIEW_MOTION_PROPS}
