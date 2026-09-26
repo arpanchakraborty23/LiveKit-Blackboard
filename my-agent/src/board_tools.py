@@ -1,10 +1,22 @@
-"""Blackboard function tools: the tutor LLM's drawing interface."""
+"""Blackboard function tools: the tutor LLM's drawing interface.
 
+Tools are grouped in :class:`BlackboardToolset` (an ``AsyncToolset``) so the
+agent adds/removes diagram tools as one unit and long-running diagram work can
+send progress updates while the conversation continues. Individual
+module-level tools are kept for backwards compatibility (tests import them
+directly); the toolset references the same function objects.
+"""
+
+import json
+import logging
 from typing import Optional
 
 from livekit.agents import RunContext, ToolError, function_tool, get_job_context
+from livekit.agents.llm.async_toolset import AsyncToolset
 
 import board_state
+
+logger = logging.getLogger("blackboard")
 
 SHAPES = ("circle", "rect", "triangle")
 GEOMETRY_PACKS = (
@@ -340,3 +352,90 @@ async def erase(context: RunContext, target_seq: int) -> str:
     if not removed:
         return f"Item #{target_seq} is not on the board"
     return f"Erased item #{target_seq}"
+
+
+@function_tool()
+async def plan_diagram_via_frontend(
+    context: RunContext,
+    topic: str,
+    detail: str = "",
+) -> str:
+    """Ask the frontend's on-device diagram planner to sketch a diagram.
+
+    The browser runs a tiny local model (Needle WASM) that turns the topic
+    into board ops and paints them immediately; the returned ops are then
+    rebroadcast for snapshots/history. Use for multi-item diagrams where
+    local planning is faster than several sequential tool calls.
+
+    Args:
+        topic: Short diagram topic, e.g. "right triangle with hypotenuse labeled"
+        detail: Optional extra hints (labels, values, layout preferences)
+    """
+    await context.update(f"Sketching {topic} on the board now.")
+    room = get_job_context().room
+    try:
+        remotes = list(room.remote_participants.values())
+    except Exception:
+        remotes = []
+    if not remotes:
+        return "No frontend available to plan the diagram; draw directly instead."
+
+    target = remotes[0].identity
+    payload = json.dumps({"topic": topic, "detail": detail})
+    try:
+        async with context.with_filler("Drawing that on the board, one sec.", delay=4):
+            response = await room.local_participant.perform_rpc(
+                destination_identity=target,
+                method="planDiagram",
+                payload=payload,
+                response_timeout=10.0,
+            )
+    except Exception as exc:
+        logger.warning("planDiagram RPC failed: %s", exc)
+        raise ToolError(
+            "Frontend diagram planner is unavailable; draw directly instead."
+        ) from exc
+
+    try:
+        data = json.loads(response)
+    except Exception as exc:
+        raise ToolError("Frontend returned an unreadable diagram plan.") from exc
+    ops = data.get("ops") if isinstance(data, dict) else None
+    if not ops:
+        return "Frontend planner had no diagram for that topic; draw directly instead."
+    # Rebroadcast each planned op so snapshots/history stay authoritative server-side.
+    count = 0
+    for op in ops:
+        if not isinstance(op, dict) or "kind" not in op:
+            continue
+        op.pop("seq", None)  # server assigns canonical seq
+        try:
+            await board_state.emit_op(room, op)
+            count += 1
+        except Exception:
+            logger.warning("skipping invalid planned op: %r", op)
+    return f"Sketched {topic} on the board ({count} items)."
+
+
+class BlackboardToolset(AsyncToolset):
+    """All blackboard diagram tools as one async unit (id="blackboard")."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            id="blackboard",
+            tools=[
+                draw_shape,
+                draw_line,
+                write_text,
+                write_equation,
+                plot_function,
+                draw_labeled_geometry,
+                highlight,
+                clear_board,
+                write_next,
+                point_to,
+                label,
+                erase,
+                plan_diagram_via_frontend,
+            ],
+        )

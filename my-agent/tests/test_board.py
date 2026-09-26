@@ -328,3 +328,55 @@ async def test_erase_unknown_item_is_noop(room):
 
     assert result == "Item #99 is not on the board"
     assert room.local_participant.published == []
+
+
+# --- BlackboardToolset grouping + frontend RPC tool ---
+
+
+def test_blackboard_toolset_groups_all_diagram_tools():
+    toolset = board_tools.BlackboardToolset()
+
+    assert toolset.id == "blackboard"
+    assert sorted(t.id for t in toolset.tools) == [
+        "clear_board",
+        "draw_labeled_geometry",
+        "draw_line",
+        "draw_shape",
+        "erase",
+        "highlight",
+        "label",
+        "plan_diagram_via_frontend",
+        "plot_function",
+        "point_to",
+        "write_equation",
+        "write_next",
+        "write_text",
+    ]
+
+
+class FakeRunContext:
+    def __init__(self) -> None:
+        self.updates: list[str] = []
+
+    async def update(self, message: str) -> None:
+        self.updates.append(message)
+
+    def with_filler(self, *args, **kwargs):
+        from contextlib import asynccontextmanager
+
+        @asynccontextmanager
+        async def _noop():
+            yield
+
+        return _noop()
+
+
+async def test_plan_diagram_falls_back_with_no_frontend(room):
+    room.remote_participants = {}
+
+    result = await board_tools.plan_diagram_via_frontend(
+        FakeRunContext(), topic="right triangle"
+    )
+
+    assert "draw directly" in result
+    assert room.local_participant.published == []

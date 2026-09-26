@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, type MotionProps, motion } from 'motion/react';
 import {
   useAgent,
+  useAgentExpression,
   useSessionContext,
   useSessionMessages,
   useVoiceAssistant,
@@ -14,8 +15,10 @@ import {
   AgentControlBar,
   type AgentControlBarControls,
 } from '@/components/agents-ui/agent-control-bar';
+import { MoodAura, useMoodColor } from '@/components/agents-ui/mood-visualizer';
 import { BoardCanvas } from '@/components/board/board-canvas';
 import { useBoard } from '@/hooks/use-board';
+import { useNeedleDiagrams } from '@/hooks/use-needle-diagrams';
 import { cn } from '@/lib/shadcn/utils';
 
 const BOTTOM_VIEW_MOTION_PROPS: MotionProps = {
@@ -114,7 +117,7 @@ export interface AgentSessionView_01Props {
   /**
    * Shows a pre-connect buffer state with a shimmer message before messages appear.
    *
-   * @default true
+   * @default false
    */
   isPreConnectBufferEnabled?: boolean;
 
@@ -127,7 +130,7 @@ export function AgentSessionView_01({
   supportsChatInput = true,
   supportsVideoInput = true,
   supportsScreenShare = true,
-  isPreConnectBufferEnabled = true,
+  isPreConnectBufferEnabled = false,
   ref,
   className,
   ...props
@@ -138,7 +141,10 @@ export function AgentSessionView_01({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { state: agentState } = useAgent();
   const { audioTrack } = useVoiceAssistant();
+  const { mood, expression } = useAgentExpression();
+  const moodColor = useMoodColor(mood);
   const boardOps = useBoard();
+  useNeedleDiagrams();
 
   const controls: AgentControlBarControls = {
     leave: true,
@@ -163,15 +169,29 @@ export function AgentSessionView_01({
       className={cn('bg-background relative z-10 h-full w-full overflow-hidden', className)}
       {...props}
     >
-      {/* Blackboard */}
+      {/* Blackboard (above the aura orb) */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="absolute inset-x-2 top-2 bottom-[135px] sm:inset-x-4 md:inset-x-10 md:bottom-[170px]"
+        className="absolute inset-x-2 top-2 bottom-[135px] z-10 sm:inset-x-4 md:inset-x-10 md:bottom-[170px]"
       >
         <BoardCanvas ops={boardOps} />
       </motion.div>
+
+      {/* Agent presence orb (mood-driven, big and centered behind the board) */}
+      <AnimatePresence>
+        {!isChatOpen && (
+          <motion.div
+            {...SHIMMER_MOTION_PROPS}
+            className="pointer-events-none absolute inset-x-2 top-2 bottom-[135px] z-0 grid place-items-center sm:inset-x-4 md:inset-x-10 md:bottom-[170px]"
+          >
+            <div className="opacity-70">
+              <MoodAura size="lg" state={agentState} audioTrack={audioTrack} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Voice status pill */}
       <AnimatePresence>
@@ -185,12 +205,19 @@ export function AgentSessionView_01({
                 size="sm"
                 state={agentState}
                 audioTrack={audioTrack}
-                color="#6ee7b7"
-                className="h-4 w-24 text-emerald-200/90 **:data-[slot=bar]:w-[3px]"
+                color={moodColor}
+                className="h-5 w-28 **:data-[slot=bar]:w-[3px]"
+                style={{ color: moodColor }}
               />
-              <span className="text-xs font-medium text-white/70">
-                {agentState === 'speaking' ? 'Tutor is explaining…' : 'Listening'}
-              </span>
+              {mood && (
+                <span
+                  title={expression ?? undefined}
+                  className="font-mono text-[10px] font-medium tracking-wider capitalize"
+                  style={{ color: moodColor }}
+                >
+                  {mood}
+                </span>
+              )}
             </div>
           </motion.div>
         )}

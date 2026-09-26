@@ -23,8 +23,12 @@ import {
 import { cn } from '@/lib/shadcn/utils';
 import { renderGeometryShape } from './geometry-shapes';
 
-const CHALK = '#f2efe4';
-const CHALK_FADED = 'rgba(242, 239, 228, 0.45)';
+// No extra blackboard panel styling — the LiveKit session view (`bg-background`)
+// already provides the theme-aware surface (dark/light). Board strokes inherit
+// the theme foreground so they stay readable in both modes without their own
+// background layer.
+const CHALK = 'currentColor';
+const CHALK_FADED = 'currentColor';
 const BOARD_FONT = "'Bradley Hand', 'Segoe Print', 'Comic Sans MS', cursive";
 
 /** Client-side expiry for pointer effects when the agent omits ttlMs. */
@@ -213,8 +217,22 @@ function GraphView({ op, index }: { op: GraphOp; index: number }) {
     const r = Math.min(box.width, box.height) * 0.36;
     return (
       <g key={op.seq}>
-        <line x1={box.x} y1={cy} x2={box.x + box.width} y2={cy} stroke={CHALK_FADED} />
-        <line x1={cx} y1={box.y} x2={cx} y2={box.y + box.height} stroke={CHALK_FADED} />
+        <line
+          x1={box.x}
+          y1={cy}
+          x2={box.x + box.width}
+          y2={cy}
+          stroke={CHALK_FADED}
+          opacity={0.4}
+        />
+        <line
+          x1={cx}
+          y1={box.y}
+          x2={cx}
+          y2={box.y + box.height}
+          stroke={CHALK_FADED}
+          opacity={0.4}
+        />
         <circle cx={cx} cy={cy} r={r} />
         <line
           x1={cx}
@@ -311,6 +329,7 @@ function GraphView({ op, index }: { op: GraphOp; index: number }) {
         height={box.height}
         rx={8}
         stroke={CHALK_FADED}
+        opacity={0.35}
         strokeWidth={1}
         strokeDasharray="2 6"
       />
@@ -354,10 +373,28 @@ function ZeroLine({
 }) {
   if (horizontal) {
     const y = box.y + 34 + fraction * (box.height - 34 - 28);
-    return <line x1={box.x + 44} y1={y} x2={box.x + box.width - 14} y2={y} stroke={CHALK_FADED} />;
+    return (
+      <line
+        x1={box.x + 44}
+        y1={y}
+        x2={box.x + box.width - 14}
+        y2={y}
+        stroke={CHALK_FADED}
+        opacity={0.4}
+      />
+    );
   }
   const x = box.x + 44 + fraction * (box.width - 44 - 14);
-  return <line x1={x} y1={box.y + 34} x2={x} y2={box.y + box.height - 28} stroke={CHALK_FADED} />;
+  return (
+    <line
+      x1={x}
+      y1={box.y + 34}
+      x2={x}
+      y2={box.y + box.height - 28}
+      stroke={CHALK_FADED}
+      opacity={0.4}
+    />
+  );
 }
 
 /* ---------------------------------- views ---------------------------------- */
@@ -449,7 +486,7 @@ function LatexView({ op }: { op: LatexOp }) {
     >
       <div
         dangerouslySetInnerHTML={{ __html: html }}
-        style={{ color: CHALK, fontSize: (op.fontSize ?? 21) + 'px', lineHeight: 1 }}
+        style={{ color: 'inherit', fontSize: (op.fontSize ?? 21) + 'px', lineHeight: 1 }}
       />
     </foreignObject>
   );
@@ -705,7 +742,7 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
   return (
     <div
       className={cn(
-        'relative h-full w-full overflow-hidden rounded-xl border border-white/10 bg-[#212720] shadow-[inset_0_0_60px_rgba(0,0,0,0.55)]',
+        'text-foreground relative h-full w-full overflow-hidden bg-transparent',
         className
       )}
     >
@@ -725,17 +762,7 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <pattern id="board-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path
-              d="M 40 0 L 0 0 0 40"
-              fill="none"
-              stroke="rgba(242,239,228,0.05)"
-              strokeWidth="1"
-            />
-          </pattern>
         </defs>
-
-        <rect width={BOARD_WIDTH} height={BOARD_HEIGHT} fill="url(#board-grid)" />
 
         {items.map((op) => {
           switch (op.kind) {
@@ -802,20 +829,13 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
       {items.length === 0 && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <p
-            className="max-w-xs text-center text-lg opacity-50"
-            style={{ fontFamily: BOARD_FONT, color: CHALK }}
+            className="text-muted-foreground max-w-xs text-center text-sm"
+            style={{ fontFamily: BOARD_FONT }}
           >
-            The board is empty — ask me to draw something!
+            Ask me to explain something visually and it will appear here.
           </p>
         </div>
       )}
-
-      <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-3 py-1 backdrop-blur-sm">
-        <span className="size-2 rounded-full bg-emerald-400/80" aria-hidden />
-        <span className="text-xs font-medium tracking-wide text-white/70">
-          Blackboard · {items.length} item{items.length === 1 ? '' : 's'}
-        </span>
-      </div>
     </div>
   );
 }

@@ -40,12 +40,12 @@ export const APP_CONFIG_DEFAULTS: AppConfig = {
   supportsChatInput: true,
   supportsVideoInput: true,
   supportsScreenShare: true,
-  isPreConnectBufferEnabled: true,
+  isPreConnectBufferEnabled: false,
 
   logo: '/blackboard-logo.svg',
-  accent: '#2f7d5b',
+  accent: undefined,
   logoDark: '/blackboard-logo-dark.svg',
-  accentDark: '#3ddc97',
+  accentDark: undefined,
   startButtonText: 'Start learning',
 
   // optional: audio visualization configuration
