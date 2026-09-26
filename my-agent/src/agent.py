@@ -248,7 +248,7 @@ async def my_agent(ctx: JobContext):
         llm=llm.FallbackAdapter(
             [
                 inference.LLM(model="google/gemma-4-31b-it"),
-                inference.LLM(model="google/gemini-3.1-flash-lite")
+                inference.LLM(model="google/gemini-3.1-flash-lite"),
                 inference.LLM(model="deepseek-ai/deepseek-v4.1-flash")
             ]
         ),
