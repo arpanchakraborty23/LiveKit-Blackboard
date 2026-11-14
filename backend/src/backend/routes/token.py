@@ -11,7 +11,7 @@ from backend.services.database import get_db
 from backend.constants.schemas import TokenResponse, TokenRequest
 
 
-token_router = APIRouter(tags=["token"])
+token_router = APIRouter(prefix="/session",tags=["token"])
 logger = logging.getLogger(__name__)
 
 # Livekit credentials LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, AGENT_NAME

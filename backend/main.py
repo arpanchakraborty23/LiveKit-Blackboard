@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.services.database import engine
 from backend.constants.models import Base
 from src.backend.routes.token import token_router
+from src.backend.routes.health import health_router
+from src.backend.routes.prompt import prompt_route
 
 logging.basicConfig(
     level=logging.INFO,
@@ -50,7 +52,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Routers
+app.include_router(health_router,prefix="/api")
 app.include_router(token_router, prefix="/api")
+app.include_router(prompt_route,prefix="/api")
+
 
 
 @app.get("/")

@@ -18,27 +18,18 @@ class TokenResponse(BaseModel):
 
 
 # Prompts
-class PromptCreate(BaseModel):
+class PromptCreateRequest(BaseModel):
     name: str = "System Prompt"
     content: str
     is_active: bool = True
 
 
-class PromptUpdate(BaseModel):
+class PromptUpdateRequest(BaseModel):
     name: Optional[str] = None
     content: Optional[str] = None
     is_active: Optional[bool] = None
 
 
-class PromptResponse(BaseModel):
-    id: str
-    assistant_id: str
-    name: str
-    content: str
-    version: int
-    is_active: bool
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
 
 
 # Tools

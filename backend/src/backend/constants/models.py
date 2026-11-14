@@ -35,7 +35,7 @@ class Session(Base):
     ended_at = Column(DateTime, nullable=True)
 
 
-class Prompt(Base):
+class Prompts(Base):
     __tablename__ = "prompts"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
