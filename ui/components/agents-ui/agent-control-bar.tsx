@@ -20,7 +20,7 @@ import {
 } from '@/hooks/agents-ui/use-agent-control-bar';
 import { cn } from '@/lib/shadcn/utils';
 
-const LK_TOGGLE_VARIANT_1 = [
+const PILL_TOGGLE_VARIANT_1 = [
   'data-[state=off]:bg-accent data-[state=off]:hover:bg-foreground/10',
   'data-[state=off]:[&_~_button]:bg-accent data-[state=off]:[&_~_button]:hover:bg-foreground/10',
   'data-[state=off]:border-border data-[state=off]:hover:border-foreground/12',
@@ -30,7 +30,7 @@ const LK_TOGGLE_VARIANT_1 = [
   'dark:data-[state=off]:[&_~_button]:bg-accent dark:data-[state=off]:[&_~_button]:hover:bg-foreground/10',
 ];
 
-const LK_TOGGLE_VARIANT_2 = [
+const PILL_TOGGLE_VARIANT_2 = [
   'data-[state=off]:bg-accent data-[state=off]:hover:bg-foreground/10',
   'data-[state=off]:border-border data-[state=off]:hover:border-foreground/12',
   'data-[state=off]:focus-visible:border-ring data-[state=off]:focus-visible:ring-foreground/12',
@@ -47,12 +47,12 @@ const MOTION_PROPS: MotionProps = {
       height: 0,
       opacity: 0,
       marginBottom: 0,
-    },
+    } as any,
     visible: {
       height: 'auto',
       opacity: 1,
       marginBottom: 12,
-    },
+    } as any,
   },
   initial: 'hidden',
   transition: {
@@ -174,7 +174,7 @@ export interface AgentControlBarProps extends UseInputControlsProps {
    *
    * @default 'default'
    */
-  variant?: 'default' | 'outline' | 'livekit';
+  variant?: 'default' | 'outline' | 'pill';
   /**
    * This takes an object with the following keys: `leave`, `microphone`, `screenShare`, `camera`,
    * `chat`. Each key maps to a boolean value that determines whether the control is displayed.
@@ -224,7 +224,7 @@ export interface AgentControlBarProps extends UseInputControlsProps {
  *
  * ```tsx
  * <AgentControlBar
- *   variant="livekit"
+ *   variant="pill"
  *   isConnected={true}
  *   onDisconnect={() => handleDisconnect()}
  *   controls={{
@@ -289,7 +289,7 @@ export function AgentControlBar({
       aria-label="Voice assistant controls"
       className={cn(
         'bg-background border-input/50 dark:border-muted flex flex-col border p-3 drop-shadow-md/3',
-        variant === 'livekit' ? 'rounded-[31px]' : 'rounded-lg',
+        variant === 'pill' ? 'rounded-[31px]' : 'rounded-lg',
         className
       )}
       {...props}
@@ -303,7 +303,7 @@ export function AgentControlBar({
         <AgentChatInput
           chatOpen={isChatOpen || isChatOpenUncontrolled}
           onSend={handleSendMessage}
-          className={cn(variant === 'livekit' && '[&_button]:rounded-full')}
+          className={cn(variant === 'pill' && '[&_button]:rounded-full')}
         />
       </motion.div>
 
@@ -323,8 +323,8 @@ export function AgentControlBar({
               onActiveDeviceChange={handleAudioDeviceChange}
               onMediaDeviceError={handleMicrophoneDeviceSelectError}
               className={cn(
-                variant === 'livekit' && [
-                  LK_TOGGLE_VARIANT_1,
+                variant === 'pill' && [
+                  PILL_TOGGLE_VARIANT_1,
                   'rounded-full [&_button:first-child]:rounded-l-full [&_button:last-child]:rounded-r-full',
                 ]
               )}
@@ -345,8 +345,8 @@ export function AgentControlBar({
               onMediaDeviceError={handleCameraDeviceSelectError}
               onActiveDeviceChange={handleVideoDeviceChange}
               className={cn(
-                variant === 'livekit' && [
-                  LK_TOGGLE_VARIANT_1,
+                variant === 'pill' && [
+                  PILL_TOGGLE_VARIANT_1,
                   'rounded-full [&_button:first-child]:rounded-l-full [&_button:last-child]:rounded-r-full',
                 ]
               )}
@@ -362,7 +362,7 @@ export function AgentControlBar({
               pressed={screenShareToggle.enabled}
               disabled={screenShareToggle.pending}
               onPressedChange={screenShareToggle.toggle}
-              className={cn(variant === 'livekit' && [LK_TOGGLE_VARIANT_2, 'rounded-full'])}
+              className={cn(variant === 'pill' && [PILL_TOGGLE_VARIANT_2, 'rounded-full'])}
             />
           )}
 
@@ -378,7 +378,7 @@ export function AgentControlBar({
               }}
               className={agentTrackToggleVariants({
                 variant: variant === 'outline' ? 'outline' : 'default',
-                className: cn(variant === 'livekit' && [LK_TOGGLE_VARIANT_2, 'rounded-full']),
+                className: cn(variant === 'pill' && [PILL_TOGGLE_VARIANT_2, 'rounded-full']),
               })}
             >
               <MessageSquareTextIcon />
@@ -392,7 +392,7 @@ export function AgentControlBar({
             onClick={onDisconnect}
             disabled={!isConnected}
             className={cn(
-              variant === 'livekit' &&
+              variant === 'pill' &&
                 'bg-destructive/10 dark:bg-destructive/10 text-destructive hover:bg-destructive/20 dark:hover:bg-destructive/20 focus:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/4 rounded-full font-mono text-xs font-bold tracking-wider'
             )}
           >

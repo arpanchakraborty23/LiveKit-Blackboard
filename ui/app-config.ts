@@ -8,10 +8,8 @@ export interface AppConfig {
   supportsScreenShare: boolean;
   isPreConnectBufferEnabled: boolean;
 
-  logo: string;
   startButtonText: string;
   accent?: string;
-  logoDark?: string;
   accentDark?: string;
 
   audioVisualizerType?: 'bar' | 'wave' | 'grid' | 'radial' | 'aura';
@@ -28,25 +26,21 @@ export interface AppConfig {
   // agent dispatch configuration
   agentName?: string;
 
-  // LiveKit Cloud Sandbox configuration
+  // Cloud sandbox configuration
   sandboxId?: string;
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
-  companyName: 'LiveKit',
-  pageTitle: 'LiveKit Voice Agent',
-  pageDescription: 'A voice agent built with LiveKit',
+  companyName: 'Personal Autonomous Agent',
+  pageTitle: 'Personal Autonomous Agent',
+  pageDescription: 'A real-time personal autonomous AI agent',
 
   supportsChatInput: true,
   supportsVideoInput: true,
   supportsScreenShare: true,
   isPreConnectBufferEnabled: true,
 
-  logo: '/lk-logo.svg',
-  accent: '#002cf2',
-  logoDark: '/lk-logo-dark.svg',
-  accentDark: '#1fd5f9',
-  startButtonText: 'Start call',
+  startButtonText: 'Start session',
 
   // optional: audio visualization configuration
   // audioVisualizerType: 'bar',
@@ -67,6 +61,6 @@ export const APP_CONFIG_DEFAULTS: AppConfig = {
   // agent dispatch configuration
   agentName: process.env.AGENT_NAME ?? undefined,
 
-  // LiveKit Cloud Sandbox configuration
+  // Cloud sandbox configuration
   sandboxId: undefined,
 };

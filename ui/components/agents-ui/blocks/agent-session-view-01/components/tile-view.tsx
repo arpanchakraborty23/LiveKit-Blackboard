@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useMemo } from 'react';
 import { Track } from 'livekit-client';
 import { AnimatePresence, type MotionProps, motion } from 'motion/react';
@@ -158,7 +160,7 @@ export function TileLayout({
                       'bg-background rounded-[50px] border border-transparent transition-[border,drop-shadow]',
                       isChatOpen && 'border-input shadow-2xl/10 delay-200'
                     )}
-                    style={{ color: audioVisualizerColor }}
+                    style={{ color: audioVisualizerColor } as any}
                   />
                 </motion.div>
               )}
@@ -168,19 +170,23 @@ export function TileLayout({
                 <motion.div
                   key="avatar"
                   layoutId="avatar"
-                  initial={{
-                    scale: 1,
-                    opacity: 1,
-                    maskImage:
-                      'radial-gradient(circle, rgba(0, 0, 0, 1) 0, rgba(0, 0, 0, 1) 20px, transparent 20px)',
-                    filter: 'blur(20px)',
-                  }}
-                  animate={{
-                    maskImage:
-                      'radial-gradient(circle, rgba(0, 0, 0, 1) 0, rgba(0, 0, 0, 1) 500px, transparent 500px)',
-                    filter: 'blur(0px)',
-                    borderRadius: isChatOpen ? 6 : 12,
-                  }}
+                  initial={
+                    {
+                      scale: 1,
+                      opacity: 1,
+                      maskImage:
+                        'radial-gradient(circle, rgba(0, 0, 0, 1) 0, rgba(0, 0, 0, 1) 20px, transparent 20px)',
+                      filter: 'blur(20px)',
+                    } as any
+                  }
+                  animate={
+                    {
+                      maskImage:
+                        'radial-gradient(circle, rgba(0, 0, 0, 1) 0, rgba(0, 0, 0, 1) 500px, transparent 500px)',
+                      filter: 'blur(0px)',
+                      borderRadius: isChatOpen ? 6 : 12,
+                    } as any
+                  }
                   transition={{
                     ...ANIMATION_TRANSITION,
                     delay: animationDelay,

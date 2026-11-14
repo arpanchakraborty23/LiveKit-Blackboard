@@ -1,86 +1,33 @@
 import { NextResponse } from 'next/server';
-import { AccessToken, type AccessTokenOptions, type VideoGrant } from 'livekit-server-sdk';
-import { RoomConfiguration } from '@livekit/protocol';
+import { AccessToken, type VideoGrant } from 'livekit-server-sdk';
+import { RoomAgentDispatch, RoomConfiguration } from '@livekit/protocol';
 
-type ConnectionDetails = {
-  serverUrl: string;
-  roomName: string;
-  participantName: string;
-  participantToken: string;
-};
-
-// NOTE: you are expected to define the following environment variables in `.env.local`:
 const API_KEY = process.env.LIVEKIT_API_KEY;
 const API_SECRET = process.env.LIVEKIT_API_SECRET;
 const LIVEKIT_URL = process.env.LIVEKIT_URL;
+const AGENT_NAME = process.env.AGENT_NAME ?? 'my-agent';
 
-// don't cache the results
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function POST(req: Request) {
-  // make an exception for the vercel preview environment
-  if (process.env.NODE_ENV !== 'development' && process.env.IS_VERCEL_PREVIEW !== 'true') {
-    throw new Error(
-      'THIS API ROUTE IS INSECURE. DO NOT USE THIS ROUTE IN PRODUCTION WITHOUT AN AUTHENTICATION LAYER.'
+export async function POST() {
+  if (!LIVEKIT_URL || !API_KEY || !API_SECRET) {
+    return NextResponse.json(
+      { error: 'LiveKit is not configured. Set LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET in ui/.env.' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 
-  try {
-    if (LIVEKIT_URL === undefined) {
-      throw new Error('LIVEKIT_URL is not defined');
-    }
-    if (API_KEY === undefined) {
-      throw new Error('LIVEKIT_API_KEY is not defined');
-    }
-    if (API_SECRET === undefined) {
-      throw new Error('LIVEKIT_API_SECRET is not defined');
-    }
+  const roomName = `room_${Math.random().toString(36).slice(2, 10)}`;
+  const participantName = 'user';
+  const participantIdentity = `user_${Math.random().toString(36).slice(2, 10)}`;
 
-    // Parse room config from request body.
-    const body = await req.json();
-    const roomConfig = body?.room_config
-      ? RoomConfiguration.fromJson(body.room_config, { ignoreUnknownFields: true })
-      : new RoomConfiguration();
-
-    // Generate participant token
-    const participantName = 'user';
-    const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
-    const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
-
-    const participantToken = await createParticipantToken(
-      { identity: participantIdentity, name: participantName },
-      roomName,
-      roomConfig
-    );
-
-    // Return connection details
-    const data: ConnectionDetails = {
-      serverUrl: LIVEKIT_URL,
-      roomName,
-      participantName,
-      participantToken,
-    };
-    const headers = new Headers({
-      'Cache-Control': 'no-store',
-    });
-    return NextResponse.json(data, { headers });
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(error);
-      return new NextResponse(error.message, { status: 500 });
-    }
-  }
-}
-
-function createParticipantToken(
-  userInfo: AccessTokenOptions,
-  roomName: string,
-  roomConfig: RoomConfiguration | undefined
-): Promise<string> {
   const at = new AccessToken(API_KEY, API_SECRET, {
-    ...userInfo,
+    identity: participantIdentity,
+    name: participantName,
     ttl: '15m',
   });
+
   const grant: VideoGrant = {
     room: roomName,
     roomJoin: true,
@@ -90,9 +37,14 @@ function createParticipantToken(
   };
   at.addGrant(grant);
 
-  if (roomConfig) {
-    at.roomConfig = roomConfig;
-  }
+  at.roomConfig = new RoomConfiguration({
+    agents: [new RoomAgentDispatch({ agentName: AGENT_NAME })],
+  });
 
-  return at.toJwt();
+  const participantToken = await at.toJwt();
+
+  return NextResponse.json(
+    { serverUrl: LIVEKIT_URL, roomName, participantName, participantToken },
+    { headers: { 'Cache-Control': 'no-store' } }
+  );
 }

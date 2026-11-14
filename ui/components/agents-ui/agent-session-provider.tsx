@@ -1,3 +1,5 @@
+'use client';
+
 import { type Room } from 'livekit-client';
 import {
   RoomAudioRenderer,

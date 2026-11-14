@@ -14,7 +14,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Anchored to the repo root on purpose: an unanchored `lib/` also ignores `ui/lib/**`.
+/lib/
 lib64/
 parts/
 sdist/

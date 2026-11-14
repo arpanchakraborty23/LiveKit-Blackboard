@@ -14,8 +14,7 @@ import {
   AgentControlBar,
   type AgentControlBarControls,
 } from '@/components/agents-ui/agent-control-bar';
-import { BoardCanvas } from '@/components/board/board-canvas';
-import { useBoard } from '@/hooks/use-board';
+import { ExpressionAura } from '@/components/agents-ui/expression-aura';
 import { cn } from '@/lib/shadcn/utils';
 
 const BOTTOM_VIEW_MOTION_PROPS: MotionProps = {
@@ -138,7 +137,6 @@ export function AgentSessionView_01({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { state: agentState } = useAgent();
   const { audioTrack } = useVoiceAssistant();
-  const boardOps = useBoard();
 
   const controls: AgentControlBarControls = {
     leave: true,
@@ -163,15 +161,22 @@ export function AgentSessionView_01({
       className={cn('bg-background relative z-10 h-full w-full overflow-hidden', className)}
       {...props}
     >
-      {/* Blackboard */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-        className="absolute inset-x-2 top-2 bottom-[135px] sm:inset-x-4 md:inset-x-10 md:bottom-[170px]"
-      >
-        <BoardCanvas ops={boardOps} />
-      </motion.div>
+      {/* Mood aura. Behind everything, never interactive: it is decoration that reports the
+          agent's delivery, so it must not steal a click or cover the controls. */}
+      <AnimatePresence>
+        {!isChatOpen && (
+          <motion.div
+            key="expression-aura"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="pointer-events-none absolute top-1/2 left-1/2 z-0 -translate-x-1/2 -translate-y-1/2"
+          >
+            <ExpressionAura size="xl" className="opacity-90" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Voice status pill */}
       <AnimatePresence>
@@ -189,7 +194,7 @@ export function AgentSessionView_01({
                 className="h-4 w-24 text-emerald-200/90 **:data-[slot=bar]:w-[3px]"
               />
               <span className="text-xs font-medium text-white/70">
-                {agentState === 'speaking' ? 'Tutor is explaining…' : 'Listening'}
+                {agentState === 'speaking' ? 'Agent is speaking…' : 'Listening'}
               </span>
             </div>
           </motion.div>
@@ -235,7 +240,7 @@ export function AgentSessionView_01({
         )}
         <div className="bg-background relative mx-auto max-w-2xl pb-3 md:pb-12">
           <AgentControlBar
-            variant="livekit"
+            variant="pill"
             controls={controls}
             isChatOpen={isChatOpen}
             isConnected={session.isConnected}

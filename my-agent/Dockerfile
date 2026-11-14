@@ -59,6 +59,14 @@ RUN uv run --module livekit.agents download-files
 # (Excludes files specified in .dockerignore)
 COPY . .
 
+# Bake the config bundle into the image. This is the last-resort configuration the
+# agent falls back to when the config Edge Function is unreachable, so a control-plane
+# outage degrades to "config is stale" rather than "no sessions can start".
+# It needs AGENT_CONFIG_URL, AGENT_API_KEY and SNAPSHOT_ASSISTANT_ID at build time:
+#   docker build --build-arg ... .   (or the platform's build-time env, e.g. LiveKit Cloud)
+# A failure here must never break the build — a stale snapshot is still useful.
+RUN uv run scripts/snapshot.py || echo "no config snapshot baked"
+
 # --- Production stage ---
 # Build tools (gcc, g++, python3-dev) are not included in the final image
 FROM base

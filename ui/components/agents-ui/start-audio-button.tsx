@@ -1,3 +1,5 @@
+'use client';
+
 import { type ComponentProps } from 'react';
 import { type Room } from 'livekit-client';
 import { useEnsureRoom, useStartAudio } from '@livekit/components-react';
@@ -18,7 +20,7 @@ export interface StartAudioButtonProps extends ComponentProps<'button'> {
    */
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   /**
-   * The LiveKit room instance. If not provided, uses the room from context.
+   * The room instance. If not provided, uses the room from context.
    */
   room?: Room;
   /**
