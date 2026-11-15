@@ -17,9 +17,8 @@ import { AgentSessionButton } from '@/components/app/agent-session-context';
 import { cn } from '@/lib/shadcn/utils';
 
 const NAV_ITEMS = [
-  { href: '/prompts', label: 'Prompts', icon: ScrollText },
+  { href: '/prompts', label: 'Prompts & Skills', icon: Sparkles },
   { href: '/tools', label: 'MCP & Tools', icon: Wrench },
-  { href: '/skills', label: 'Skills', icon: Sparkles },
   { href: '/knowledge', label: 'Knowledge', icon: BookOpen },
   { href: '/memory', label: 'Memory', icon: Brain },
   { href: '/settings', label: 'Settings', icon: Settings },
@@ -30,9 +29,12 @@ export function TopNavBar({ className }: { className?: string }) {
   const router = useRouter();
 
   // Determine active tab based on current route
-  const currentTab = NAV_ITEMS.find(
-    (item) => item.href === pathname || (item.href !== '/' && pathname.startsWith(item.href))
-  )?.href ?? '/prompts';
+  const currentTab =
+    pathname === '/skills' || pathname.startsWith('/skills')
+      ? '/prompts'
+      : (NAV_ITEMS.find(
+          (item) => item.href === pathname || (item.href !== '/' && pathname.startsWith(item.href))
+        )?.href ?? '/prompts');
 
   return (
     <header

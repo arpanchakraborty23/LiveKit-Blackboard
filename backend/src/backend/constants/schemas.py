@@ -17,6 +17,11 @@ class TokenResponse(BaseModel):
 
 
 
+# System prompt (static, always active)
+class SystemPromptUpdate(BaseModel):
+    content: str = ""
+
+
 # Prompts
 class PromptCreateRequest(BaseModel):
     name: str = "System Prompt"
