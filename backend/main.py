@@ -11,6 +11,7 @@ from src.backend.routes.token import token_router
 from src.backend.routes.health import health_router
 from src.backend.routes.prompt import prompt_route
 from src.backend.routes.skills import skills_router
+from src.backend.routes.mcp import mcp_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -61,6 +62,7 @@ app.include_router(health_router, include_in_schema=False)
 app.include_router(token_router, prefix="/api")
 app.include_router(prompt_route,prefix="/api")
 app.include_router(skills_router, prefix="/api")
+app.include_router(mcp_router, prefix="/api")
 
 
 

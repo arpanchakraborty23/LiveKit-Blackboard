@@ -76,7 +76,7 @@ class McpServerCreate(BaseModel):
     url: str
     transport: str = "sse"
     is_active: bool = True
-    headers: Optional[Dict[str, Any]] = None
+    key : Optional[str] = None
 
 
 class McpServerUpdate(BaseModel):

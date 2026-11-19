@@ -1,3 +1,19 @@
 {
-    "python.terminal.useEnvFile": true
+  // The repo holds two independent uv projects, each with its own venv:
+  //   backend/.venv   -> Python 3.14, FastAPI backend (primary interpreter)
+  //   my-agent/.venv  -> Python 3.12, LiveKit voice agent
+  // Selecting the backend venv here is what lets Pylance resolve `fastapi`,
+  // `pydantic`, `sqlalchemy`, `livekit-api`, etc. instead of falling back to
+  // the global interpreter (which has none of them installed).
+  "python.terminal.useEnvFile": true,
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
+  "python.analysis.extraPaths": [
+    // backend imports both `backend.*` (installed via backend.pth) and
+    // `src.backend.*` (works when uvicorn runs with cwd = backend)
+    "${workspaceFolder}/backend",
+    "${workspaceFolder}/backend/src",
+    // my-agent's own packages/deps live in its separate venv
+    "${workspaceFolder}/my-agent/src",
+    "${workspaceFolder}/my-agent/.venv/Lib/site-packages"
+  ]
 }

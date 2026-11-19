@@ -6,7 +6,6 @@ from sqlalchemy import (
     Text,
     Boolean,
     Integer,
-    Float,
     DateTime,
     ForeignKey,
     JSON,
@@ -22,8 +21,9 @@ class Base(DeclarativeBase):
 def generate_uuid():
     return str(uuid.uuid4())
 
+
 class Session(Base):
-    __tablename__ = "sessions"
+    __tablename__ = "Sessions"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     session_id = Column(String(64), nullable=True)
@@ -36,59 +36,41 @@ class Session(Base):
 
 
 class Prompts(Base):
-    __tablename__ = "prompts"
+    __tablename__ = "Prompts"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     name = Column(String(128), nullable=False, default="System Prompt")
     content = Column(Text, nullable=False)
     version = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
-
-class Tool(Base):
-    __tablename__ = "tools"
-
-    id = Column(String(36), primary_key=True, default=generate_uuid)
-    name = Column(String(64), nullable=False)
-    kind = Column(String(32), default="custom")
-    description = Column(Text, nullable=True)
-    is_enabled = Column(Boolean, default=True)
-    schema = Column(JSON, nullable=True)
-    sort_order = Column(Integer, default=0)
-
-
-
-class McpServer(Base):
-    __tablename__ = "mcp_servers"
+class MCPServer(Base):
+    __tablename__ = "MCPServer"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    name = Column(String(64), nullable=False)
-    url = Column(String(255), nullable=False)
-    transport = Column(String(32), default="sse")
-    is_active = Column(Boolean, default=True)
-    headers = Column(JSON, nullable=True)
-    status = Column(String(32), default="unknown")
-    status_message = Column(Text, nullable=True)
-    last_discovered_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    tools = relationship("McpTool", back_populates="server", cascade="all, delete-orphan")
+    name = Column(String(26),nullable=False)
+    url = Column(String(100),nullable=False)
+    key = Column(String(26),nullable=False)
+    tool_count = Column(Integer,nullable=False)
+    is_enabled = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.now)
 
 
-class McpTool(Base):
-    __tablename__ = "mcp_tools"
+
+class MCPTools(Base):
+    __tablename__ = "MCPTools"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    mcp_server_id = Column(String(36), ForeignKey("mcp_servers.id", ondelete="CASCADE"), nullable=False)
+    mcp_server = Column(String(255),nullable=False)
     name = Column(String(128), nullable=False)
     description = Column(Text, nullable=True)
     input_schema = Column(JSON, nullable=True)
-    is_enabled = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
-    server = relationship("McpServer", back_populates="tools")
+
 
 
 class Document(Base):
