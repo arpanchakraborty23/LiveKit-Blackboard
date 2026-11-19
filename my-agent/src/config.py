@@ -1,4 +1,4 @@
-"""Config bundle shim re-exporting constants and services."""
+"""Config module shim re-exporting constants and config_service."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ SRC_DIR = Path(__file__).resolve().parent
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+import services.config_service as _target_module
 from constants.config import (
     DEFAULT_SNAPSHOT,
     PROJECT_ROOT,
@@ -20,27 +21,12 @@ from constants.config import (
     TTSConfig,
     get_default_bundle,
 )
-from services.config_service import (
-    _MEMO,
-    fetch_bundle,
-    load_snapshot,
-    reset_memo,
-    snapshot_path,
-)
 
-__all__ = [
-    "DEFAULT_SNAPSHOT",
-    "PROJECT_ROOT",
-    "REQUEST_TIMEOUT_S",
-    "ConfigBundle",
-    "ConfigError",
-    "LLMConfig",
-    "STTConfig",
-    "TTSConfig",
-    "_MEMO",
-    "fetch_bundle",
-    "get_default_bundle",
-    "load_snapshot",
-    "reset_memo",
-    "snapshot_path",
-]
+# Populate constants onto config_service so aliasing covers all symbols
+_target_module.PROJECT_ROOT = PROJECT_ROOT
+_target_module.LLMConfig = LLMConfig
+_target_module.STTConfig = STTConfig
+_target_module.TTSConfig = TTSConfig
+
+# Alias in sys.modules
+sys.modules[__name__] = _target_module

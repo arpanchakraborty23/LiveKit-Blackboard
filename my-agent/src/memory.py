@@ -1,4 +1,4 @@
-"""Memory module shim re-exporting memory_service."""
+"""Memory module shim re-exporting services.memory_service with sys.modules aliasing."""
 
 from __future__ import annotations
 
@@ -9,24 +9,7 @@ SRC_DIR = Path(__file__).resolve().parent
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from services.memory_service import (
-    HTTP_TIMEOUT_S,
-    MEMORY_SERVICE_TOKEN,
-    MEMORY_SERVICE_URL,
-    _group_id,
-    _headers,
-    end_session_hook,
-    recall,
-    remember,
-)
+import services.memory_service as _target_module
 
-__all__ = [
-    "HTTP_TIMEOUT_S",
-    "MEMORY_SERVICE_TOKEN",
-    "MEMORY_SERVICE_URL",
-    "_group_id",
-    "_headers",
-    "end_session_hook",
-    "recall",
-    "remember",
-]
+# Alias in sys.modules so imports and state are shared
+sys.modules[__name__] = _target_module
