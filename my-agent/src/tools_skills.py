@@ -122,35 +122,48 @@ async def _fetch_skill_remote(
     name: str,
     path: str | None = None,
 ) -> str | None:
-    """Fetches skill body from the assistant-config Edge Function."""
+    """Fetches skill body from the assistant-config Edge Function or FastAPI backend."""
     url = os.getenv("AGENT_CONFIG_URL")
     key = os.getenv("AGENT_API_KEY")
 
-    if not url or not key:
-        return None
+    if url and key:
+        headers = {"x-agent-key": key}
+        params: dict[str, str] = {"assistant_id": assistant_id, "skill": name}
+        if path:
+            params["path"] = path
 
-    headers = {"x-agent-key": key}
-    params: dict[str, str] = {"assistant_id": assistant_id, "skill": name}
-    if path:
-        params["path"] = path
+        try:
+            async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT_S) as client:
+                resp = await client.get(url, params=params, headers=headers)
 
-    try:
-        async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT_S) as client:
-            resp = await client.get(url, params=params, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                if path:
+                    return str(data.get("content") or "")
+                return str(data.get("body") or "")
+            else:
+                logger.warning(
+                    "Skill fetch returned %d: %s", resp.status_code, resp.text[:100]
+                )
+        except Exception as exc:
+            logger.warning("Remote skill fetch failed: %s", exc)
 
-        if resp.status_code == 200:
-            data = resp.json()
-            if path:
-                return str(data.get("content") or "")
-            return str(data.get("body") or "")
-        else:
-            logger.warning(
-                "Skill fetch returned %d: %s", resp.status_code, resp.text[:100]
-            )
-            return None
-    except Exception as exc:
-        logger.warning("Remote skill fetch failed: %s", exc)
-        return None
+    # Check FastAPI backend
+    backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
+    if backend_url:
+        try:
+            async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT_S) as client:
+                resp = await client.get(f"{backend_url.rstrip('/')}/api/skills/active")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    skills = data.get("skills") or data.get("data") or []
+                    for s in skills:
+                        if s.get("name") == name:
+                            return str(s.get("instructions") or s.get("description") or "")
+        except Exception as exc:
+            logger.debug("Backend skill fetch failed: %s", exc)
+
+    return None
 
 
 @function_tool
