@@ -1,20 +1,139 @@
-import { Button } from '@/components/ui/button';
+'use client';
 
-function WelcomeImage() {
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/shadcn/utils';
+
+/** Self-drawing chalk SVG board preview */
+function BoardPreviewSVG() {
+  const BOARD_PREVIEW_CSS = `
+    .chalk-draw {
+      stroke-dasharray: 600;
+      stroke-dashoffset: 600;
+      animation: chalk-draw 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .chalk-draw-2 { animation-delay: 0.5s; }
+    .chalk-draw-3 { animation-delay: 1.0s; }
+    .chalk-fade {
+      opacity: 0;
+      animation: chalk-fade-in 0.5s ease-out 1.6s forwards;
+    }
+    @keyframes chalk-draw { to { stroke-dashoffset: 0; } }
+    @keyframes chalk-fade-in { to { opacity: 1; } }
+  `;
+
   return (
     <svg
-      width="64"
-      height="64"
-      viewBox="0 0 64 64"
+      viewBox="0 0 540 300"
+      className="h-full w-full"
+      aria-hidden="true"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="text-fg0 mb-4 size-16"
     >
+      <defs>
+        <style>{BOARD_PREVIEW_CSS}</style>
+        <pattern id="preview-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path
+            d="M 40 0 L 0 0 0 40"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.5"
+            opacity="0.07"
+          />
+        </pattern>
+        <filter id="preview-glow">
+          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/* Grid background */}
+      <rect width="540" height="300" fill="url(#preview-grid)" />
+
+      {/* Coordinate axes */}
+      <line x1="60" y1="240" x2="500" y2="240" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
+      <line x1="80"  y1="30"  x2="80"  y2="250" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
+
+      {/* Parabola y = x² */}
       <path
-        d="M15 24V40C15 40.7957 14.6839 41.5587 14.1213 42.1213C13.5587 42.6839 12.7956 43 12 43C11.2044 43 10.4413 42.6839 9.87868 42.1213C9.31607 41.5587 9 40.7957 9 40V24C9 23.2044 9.31607 22.4413 9.87868 21.8787C10.4413 21.3161 11.2044 21 12 21C12.7956 21 13.5587 21.3161 14.1213 21.8787C14.6839 22.4413 15 23.2044 15 24ZM22 5C21.2044 5 20.4413 5.31607 19.8787 5.87868C19.3161 6.44129 19 7.20435 19 8V56C19 56.7957 19.3161 57.5587 19.8787 58.1213C20.4413 58.6839 21.2044 59 22 59C22.7956 59 23.5587 58.6839 24.1213 58.1213C24.6839 57.5587 25 56.7957 25 56V8C25 7.20435 24.6839 6.44129 24.1213 5.87868C23.5587 5.31607 22.7956 5 22 5ZM32 13C31.2044 13 30.4413 13.3161 29.8787 13.8787C29.3161 14.4413 29 15.2044 29 16V48C29 48.7957 29.3161 49.5587 29.8787 50.1213C30.4413 50.6839 31.2044 51 32 51C32.7956 51 33.5587 50.6839 34.1213 50.1213C34.6839 49.5587 35 48.7957 35 48V16C35 15.2044 34.6839 14.4413 34.1213 13.8787C33.5587 13.3161 32.7956 13 32 13ZM42 21C41.2043 21 40.4413 21.3161 39.8787 21.8787C39.3161 22.4413 39 23.2044 39 24V40C39 40.7957 39.3161 41.5587 39.8787 42.1213C40.4413 42.6839 41.2043 43 42 43C42.7957 43 43.5587 42.6839 44.1213 42.1213C44.6839 41.5587 45 40.7957 45 40V24C45 23.2044 44.6839 22.4413 44.1213 21.8787C43.5587 21.3161 42.7957 21 42 21ZM52 17C51.2043 17 50.4413 17.3161 49.8787 17.8787C49.3161 18.4413 49 19.2044 49 20V44C49 44.7957 49.3161 45.5587 49.8787 46.1213C50.4413 46.6839 51.2043 47 52 47C52.7957 47 53.5587 46.6839 54.1213 46.1213C54.6839 45.5587 55 44.7957 55 44V20C55 19.2044 54.6839 18.4413 54.1213 17.8787C53.5587 17.3161 52.7957 17 52 17Z"
+        d="M 100 220 Q 200 20 290 140 Q 380 260 480 60"
+        fill="none"
+        stroke="#ffd66e"
+        strokeWidth="3"
+        strokeLinecap="round"
+        className="chalk-draw"
+      />
+
+      {/* Circle */}
+      <circle
+        cx="390" cy="130" r="52"
+        stroke="oklch(0.68 0.17 235)"
+        strokeWidth="2.5"
+        className="chalk-draw chalk-draw-2"
+      />
+
+      {/* LaTeX label — fade in after curve is drawn */}
+      <text
+        x="90" y="68"
         fill="currentColor"
+        fontSize="20"
+        fontFamily="'Bradley Hand', 'Segoe Print', cursive"
+        className="chalk-fade"
+      >
+        y = x²
+      </text>
+
+      {/* Vertex dot */}
+      <circle
+        cx="290" cy="140" r="5"
+        fill="#ffd66e"
+        filter="url(#preview-glow)"
+        className="chalk-fade"
+      />
+
+      {/* Annotation */}
+      <text
+        x="300" y="130"
+        fill="#ffd66e"
+        fontSize="13"
+        fontFamily="'Bradley Hand', 'Segoe Print', cursive"
+        className="chalk-fade"
+      >
+        vertex
+      </text>
+
+      {/* Triangle (geometry op) */}
+      <path
+        d="M 170 230 L 220 150 L 270 230 Z"
+        fill="none"
+        stroke="oklch(0.72 0.22 350)"
+        strokeWidth="2"
+        strokeLinejoin="round"
+        className="chalk-draw chalk-draw-3"
       />
     </svg>
+  );
+}
+
+/** Animated status indicator */
+function StatusPill() {
+  return (
+    <div
+      className="flex items-center gap-2 rounded-full border border-border/60
+                 bg-background/60 px-4 py-1.5 backdrop-blur-sm"
+    >
+      <span className="relative flex size-2">
+        <span
+          className="absolute inline-flex size-full animate-ping rounded-full
+                     bg-emerald-400 opacity-75"
+        />
+        <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+      </span>
+      <span className="font-mono text-xs text-muted-foreground">
+        Agent ready · LiveKit connected
+      </span>
+    </div>
   );
 }
 
@@ -29,22 +148,54 @@ export const WelcomeView = ({
   ref,
 }: React.ComponentProps<'div'> & WelcomeViewProps) => {
   return (
-    <div ref={ref}>
-      <section className="bg-background flex flex-col items-center justify-center text-center">
-        <WelcomeImage />
+    <div ref={ref} className="flex flex-col items-center gap-8 px-4 text-center">
+      {/* ── Animated board preview card ── */}
+      <div
+        className="relative w-full max-w-lg overflow-hidden rounded-2xl border
+                   border-border/40 bg-card/40 shadow-xl backdrop-blur-sm
+                   dark:bg-card/20 dark:shadow-primary/5"
+        style={{ aspectRatio: '16/9' }}
+      >
+        <BoardPreviewSVG />
 
-        <p className="text-foreground max-w-prose pt-1 leading-6 font-medium">
-          Talk with your personal autonomous agent in real time
+        {/* "board · live" pill in top-left */}
+        <div
+          className="absolute left-3 top-3 rounded-lg border border-border/40
+                     bg-background/80 px-2 py-1 font-mono text-[10px]
+                     text-muted-foreground backdrop-blur-sm"
+        >
+          board · preview
+        </div>
+      </div>
+
+      {/* ── Headline + tagline ── */}
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          Voice ·{' '}
+          <span className="text-primary">Blackboard</span>
+        </h1>
+        <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+          Talk to your AI tutor. It draws shapes, graphs, and equations
+          on a shared canvas — in real time.
         </p>
+      </div>
 
+      {/* ── Status + CTA ── */}
+      <div className="flex flex-col items-center gap-4">
+        <StatusPill />
         <Button
           size="lg"
           onClick={onStartCall}
-          className="mt-6 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase"
+          className={cn(
+            'w-56 rounded-full font-mono text-xs font-bold tracking-wider uppercase',
+            'shadow-lg shadow-primary/20 transition-shadow',
+            'hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98]',
+            'transition-[box-shadow,transform] duration-200'
+          )}
         >
           {startButtonText}
         </Button>
-      </section>
+      </div>
     </div>
   );
 };

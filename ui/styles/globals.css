@@ -211,3 +211,54 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Board design tokens ──────────────────────────────────────────────────── */
+:root {
+  --board-bg:         oklch(0.99 0.002 265);
+  --board-grid-line:  oklch(0.85 0.005 265 / 0.6);
+  --board-chalk:      oklch(0.16 0.012 265);
+  --board-gold:       #ffd66e;
+  --board-sky:        oklch(0.68 0.17 235);
+  --board-mint:       #a8e6a1;
+  --board-rose:       oklch(0.72 0.22 350);
+}
+
+.dark {
+  --board-bg:         oklch(0 0 0);
+  --board-grid-line:  oklch(1 0 0 / 0.05);
+  --board-chalk:      oklch(0.97 0.005 265);
+}
+
+/* ── Reusable bento card utility ─────────────────────────────────────────── */
+.bento-card {
+  @apply rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm
+         shadow-sm transition-shadow hover:shadow-md
+         dark:bg-card/30 dark:shadow-primary/5;
+}
+
+/* ── SPA View Transitions (MWG: faster-spa-view-transitions) ─────────────── */
+@view-transition {
+  navigation: auto;
+}
+
+@keyframes vt-slide-in-right {
+  from { transform: translateX(1.5rem); opacity: 0; }
+  to   { transform: translateX(0);      opacity: 1; }
+}
+@keyframes vt-slide-out-left {
+  from { transform: translateX(0);       opacity: 1; }
+  to   { transform: translateX(-1.5rem); opacity: 0; }
+}
+
+::view-transition-new(page-content) {
+  animation: vt-slide-in-right 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+::view-transition-old(page-content) {
+  animation: vt-slide-out-left 200ms ease-in;
+}
+
+/* Top nav persists across page transitions */
+::view-transition-new(top-nav),
+::view-transition-old(top-nav) {
+  animation: none;
+}

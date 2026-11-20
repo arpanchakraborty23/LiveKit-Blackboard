@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { ThemeProvider } from '@/components/app/theme-provider';
+import { ThemeToggle } from '@/components/app/theme-toggle';
 import { AgentSessionModalProvider } from '@/components/app/agent-session-context';
 import { cn } from '@/lib/shadcn/utils';
 import { getAppConfig, getStyles } from '@/lib/utils';
@@ -48,7 +49,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
   const hdrs = await headers();
   const appConfig = await getAppConfig(hdrs);
   const styles = getStyles(appConfig);
-  const { pageTitle, pageDescription } = appConfig;
+  const { pageTitle, pageDescription, companyName, logo, logoDark } = appConfig;
 
   return (
     <html
@@ -91,32 +92,30 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           enableSystem={false}
           disableTransitionOnChange
         >
-<<<<<<< HEAD
           <AgentSessionModalProvider appConfig={appConfig}>
-            {children}
-          </AgentSessionModalProvider>
-=======
-          <header className="fixed top-0 left-0 z-50 hidden w-full flex-row items-center justify-between p-6 md:flex">
-            <Link href="/" className="scale-100 transition-transform duration-300 hover:scale-110">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logo} alt={`${companyName} Logo`} className="block size-6 dark:hidden" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={logoDark ?? logo}
-                alt={`${companyName} Logo`}
-                className="hidden size-6 dark:block"
-              />
-            </Link>
-            <span className="text-foreground font-mono text-xs font-bold tracking-wider uppercase">
-              {companyName}
-            </span>
-          </header>
+            {logo && (
+              <header className="fixed top-0 left-0 z-50 hidden w-full flex-row items-center justify-between p-6 md:flex">
+                <Link href="/" className="scale-100 transition-transform duration-300 hover:scale-110">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={logo} alt={`${companyName} Logo`} className="block size-6 dark:hidden" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={logoDark ?? logo}
+                    alt={`${companyName} Logo`}
+                    className="hidden size-6 dark:block"
+                  />
+                </Link>
+                <span className="text-foreground font-mono text-xs font-bold tracking-wider uppercase">
+                  {companyName}
+                </span>
+              </header>
+            )}
 
-          {children}
-          <div className="group fixed bottom-0 left-1/2 z-50 mb-2 -translate-x-1/2">
-            <ThemeToggle className="translate-y-20 transition-transform delay-150 duration-300 group-hover:translate-y-0" />
-          </div>
->>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
+            {children}
+            <div className="group fixed bottom-0 left-1/2 z-50 mb-2 -translate-x-1/2">
+              <ThemeToggle className="translate-y-20 transition-transform delay-150 duration-300 group-hover:translate-y-0" />
+            </div>
+          </AgentSessionModalProvider>
         </ThemeProvider>
       </body>
     </html>

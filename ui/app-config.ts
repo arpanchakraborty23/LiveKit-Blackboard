@@ -9,6 +9,8 @@ export interface AppConfig {
   isPreConnectBufferEnabled: boolean;
 
   startButtonText: string;
+  logo?: string;
+  logoDark?: string;
   accent?: string;
   accentDark?: string;
 
@@ -31,30 +33,20 @@ export interface AppConfig {
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
-<<<<<<< HEAD
   companyName: 'Personal Autonomous Agent',
   pageTitle: 'Personal Autonomous Agent',
-  pageDescription: 'A real-time personal autonomous AI agent',
-=======
-  companyName: 'Blackboard Tutor',
-  pageTitle: 'Blackboard Tutor',
-  pageDescription: 'A voice AI tutor that explains topics visually on a live blackboard',
->>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
+  pageDescription: 'A real-time personal autonomous AI assistant',
 
   supportsChatInput: true,
   supportsVideoInput: true,
   supportsScreenShare: true,
   isPreConnectBufferEnabled: false,
 
-<<<<<<< HEAD
   startButtonText: 'Start session',
-=======
   logo: '/blackboard-logo.svg',
-  accent: undefined,
   logoDark: '/blackboard-logo-dark.svg',
+  accent: undefined,
   accentDark: undefined,
-  startButtonText: 'Start learning',
->>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
 
   // optional: audio visualization configuration
   // audioVisualizerType: 'bar',
@@ -65,7 +57,6 @@ export const APP_CONFIG_DEFAULTS: AppConfig = {
   // audioVisualizerType: 'radial',
   // audioVisualizerRadialBarCount: 24,
   // audioVisualizerRadialRadius: 100,
-  // audioVisualizerType: 'grid',
   // audioVisualizerGridRowCount: 25,
   // audioVisualizerGridColumnCount: 25,
   // audioVisualizerType: 'wave',

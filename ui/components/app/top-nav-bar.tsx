@@ -39,7 +39,13 @@ export function TopNavBar({ className }: { className?: string }) {
   return (
     <header
       className={cn(
-        'border-border/60 bg-background/80 sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b px-4 sm:px-6 backdrop-blur transition-all duration-300',
+        // Glassmorphism header with dark-mode border glow (MWG: dark-mode + navbar)
+        'sticky top-0 z-40 flex h-16 w-full items-center justify-between px-4 sm:px-6',
+        'border-b border-border/40 bg-background/70 backdrop-blur-xl',
+        'transition-[border-color,background-color] duration-300',
+        'dark:border-primary/10 dark:bg-black/60',
+        // SPA view transition name (MWG: faster-spa-view-transitions)
+        '[view-transition-name:top-nav]',
         className
       )}
     >

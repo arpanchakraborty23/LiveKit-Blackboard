@@ -7,9 +7,8 @@ import { WarningIcon } from '@phosphor-icons/react/dist/ssr';
 import type { AppConfig } from '@/app-config';
 import { AgentSessionProvider } from '@/components/agents-ui/agent-session-provider';
 import { StartAudioButton } from '@/components/agents-ui/start-audio-button';
-import { AgentSessionView_01 } from '@/components/agents-ui/blocks/agent-session-view-01';
-import { WelcomeView } from '@/components/app/welcome-view';
-import { TopNavBar } from '@/components/app/top-nav-bar';
+import { CortexDashboard } from '@/components/cortex/cortex-dashboard';
+import { CortexVoiceRoom } from '@/components/cortex/cortex-voice-room';
 import { Toaster } from '@/components/ui/sonner';
 import { useAgentErrors } from '@/hooks/useAgentErrors';
 import { useDebugMode } from '@/hooks/useDebug';
@@ -52,16 +51,13 @@ function ActiveSessionContent({
   }, [isConnected, connectionState, onEndSession]);
 
   return (
-    <main className="fixed inset-0 z-50 grid h-svh grid-cols-1 place-content-center bg-background">
-      <AgentSessionView_01
-        supportsChatInput={appConfig.supportsChatInput}
-        supportsVideoInput={appConfig.supportsVideoInput}
-        supportsScreenShare={appConfig.supportsScreenShare}
-        isPreConnectBufferEnabled={appConfig.isPreConnectBufferEnabled}
-        className="fixed inset-0"
-      />
-      <StartAudioButton label="Start Audio" />
-    </main>
+    <TeamsSessionView
+      className="fixed inset-0 z-50"
+      supportsChatInput={appConfig.supportsChatInput}
+      supportsVideoInput={appConfig.supportsVideoInput}
+      supportsScreenShare={appConfig.supportsScreenShare}
+      isPreConnectBufferEnabled={appConfig.isPreConnectBufferEnabled}
+    />
   );
 }
 

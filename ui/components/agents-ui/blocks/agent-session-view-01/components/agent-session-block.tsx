@@ -15,14 +15,10 @@ import {
   AgentControlBar,
   type AgentControlBarControls,
 } from '@/components/agents-ui/agent-control-bar';
-<<<<<<< HEAD
-import { ExpressionAura } from '@/components/agents-ui/expression-aura';
-=======
 import { MoodAura, useMoodColor } from '@/components/agents-ui/mood-visualizer';
 import { BoardCanvas } from '@/components/board/board-canvas';
 import { useBoard } from '@/hooks/use-board';
 import { useNeedleDiagrams } from '@/hooks/use-needle-diagrams';
->>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
 import { cn } from '@/lib/shadcn/utils';
 
 const BOTTOM_VIEW_MOTION_PROPS: MotionProps = {
@@ -48,85 +44,48 @@ const BOTTOM_VIEW_MOTION_PROPS: MotionProps = {
 
 const CHAT_MOTION_PROPS: MotionProps = {
   variants: {
-    hidden: {
-      opacity: 0,
-      transition: {
-        ease: 'easeOut',
-        duration: 0.3,
-      },
-    },
     visible: {
       opacity: 1,
-      transition: {
-        delay: 0.2,
-        ease: 'easeOut',
-        duration: 0.3,
-      },
+      translateY: '0%',
+    },
+    hidden: {
+      opacity: 0,
+      translateY: '100%',
     },
   },
   initial: 'hidden',
   animate: 'visible',
   exit: 'hidden',
+  transition: {
+    duration: 0.3,
+    ease: 'easeOut',
+  },
 };
 
 const SHIMMER_MOTION_PROPS: MotionProps = {
   variants: {
     visible: {
       opacity: 1,
-      transition: {
-        ease: 'easeIn',
-        duration: 0.5,
-        delay: 0.8,
-      },
     },
     hidden: {
       opacity: 0,
-      transition: {
-        ease: 'easeIn',
-        duration: 0.5,
-        delay: 0,
-      },
     },
   },
   initial: 'hidden',
   animate: 'visible',
   exit: 'hidden',
+  transition: {
+    duration: 0.3,
+    ease: 'easeOut',
+  },
 };
 
 export interface AgentSessionView_01Props {
-  /**
-   * Message shown above the controls before the first chat message is sent.
-   *
-   * @default 'Agent is listening, ask it a question'
-   */
   preConnectMessage?: string;
-  /**
-   * Enables or disables the chat toggle and transcript input controls.
-   *
-   * @default true
-   */
   supportsChatInput?: boolean;
-  /**
-   * Enables or disables camera controls in the bottom control bar.
-   *
-   * @default true
-   */
   supportsVideoInput?: boolean;
-  /**
-   * Enables or disables screen sharing controls in the bottom control bar.
-   *
-   * @default true
-   */
   supportsScreenShare?: boolean;
-  /**
-   * Shows a pre-connect buffer state with a shimmer message before messages appear.
-   *
-   * @default false
-   */
   isPreConnectBufferEnabled?: boolean;
-
-  /** Optional class name merged onto the outer `<section>` container. */
-  className?: string;
 }
 
 export function AgentSessionView_01({
@@ -145,13 +104,10 @@ export function AgentSessionView_01({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { state: agentState } = useAgent();
   const { audioTrack } = useVoiceAssistant();
-<<<<<<< HEAD
-=======
   const { mood, expression } = useAgentExpression();
   const moodColor = useMoodColor(mood);
   const boardOps = useBoard();
   useNeedleDiagrams();
->>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
 
   const controls: AgentControlBarControls = {
     leave: true,
@@ -176,24 +132,6 @@ export function AgentSessionView_01({
       className={cn('bg-background relative z-10 h-full w-full overflow-hidden', className)}
       {...props}
     >
-<<<<<<< HEAD
-      {/* Mood aura. Behind everything, never interactive: it is decoration that reports the
-          agent's delivery, so it must not steal a click or cover the controls. */}
-      <AnimatePresence>
-        {!isChatOpen && (
-          <motion.div
-            key="expression-aura"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="pointer-events-none absolute top-1/2 left-1/2 z-0 -translate-x-1/2 -translate-y-1/2"
-          >
-            <ExpressionAura size="xl" className="opacity-90" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-=======
       {/* Blackboard (above the aura orb) */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -203,7 +141,6 @@ export function AgentSessionView_01({
       >
         <BoardCanvas ops={boardOps} />
       </motion.div>
->>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
 
       {/* Agent presence orb (mood-driven, big and centered behind the board) */}
       <AnimatePresence>
@@ -235,12 +172,7 @@ export function AgentSessionView_01({
                 className="h-5 w-28 **:data-[slot=bar]:w-[3px]"
                 style={{ color: moodColor }}
               />
-<<<<<<< HEAD
-              <span className="text-xs font-medium text-white/70">
-                {agentState === 'speaking' ? 'Agent is speaking…' : 'Listening'}
-              </span>
-=======
-              {mood && (
+              {mood ? (
                 <span
                   title={expression ?? undefined}
                   className="font-mono text-[10px] font-medium tracking-wider capitalize"
@@ -248,8 +180,11 @@ export function AgentSessionView_01({
                 >
                   {mood}
                 </span>
+              ) : (
+                <span className="text-xs font-medium text-white/70">
+                  {agentState === 'speaking' ? 'Agent is speaking…' : 'Listening'}
+                </span>
               )}
->>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
             </div>
           </motion.div>
         )}

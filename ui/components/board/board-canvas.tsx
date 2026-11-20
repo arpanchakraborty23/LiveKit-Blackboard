@@ -755,6 +755,16 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
       >
         <defs>
           <style>{BOARD_CSS}</style>
+          {/* Ruled-grid background — subtle chalk-board graph paper effect */}
+          <pattern id="board-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path
+              d="M 40 0 L 0 0 0 40"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="0.5"
+              opacity="0.07"
+            />
+          </pattern>
           <filter id="board-glow" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feMerge>
@@ -763,6 +773,9 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
             </feMerge>
           </filter>
         </defs>
+
+        {/* Grid background fill */}
+        <rect width={BOARD_WIDTH} height={BOARD_HEIGHT} fill="url(#board-grid)" />
 
         {items.map((op) => {
           switch (op.kind) {
@@ -834,6 +847,20 @@ export function BoardCanvas({ ops, className }: BoardCanvasProps) {
           >
             Ask me to explain something visually and it will appear here.
           </p>
+        </div>
+      )}
+
+      {/* Op-count badge — live telemetry overlay */}
+      {items.length > 0 && (
+        <div
+          className="pointer-events-none absolute bottom-3 right-3 flex items-center
+                     gap-1.5 rounded-full border border-border/40 bg-background/70
+                     px-2.5 py-1 backdrop-blur-sm"
+        >
+          <span className="size-1.5 rounded-full bg-emerald-500" />
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {items.length} op{items.length !== 1 ? 's' : ''}
+          </span>
         </div>
       )}
     </div>
