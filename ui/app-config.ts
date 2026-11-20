@@ -31,16 +31,30 @@ export interface AppConfig {
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
+<<<<<<< HEAD
   companyName: 'Personal Autonomous Agent',
   pageTitle: 'Personal Autonomous Agent',
   pageDescription: 'A real-time personal autonomous AI agent',
+=======
+  companyName: 'Blackboard Tutor',
+  pageTitle: 'Blackboard Tutor',
+  pageDescription: 'A voice AI tutor that explains topics visually on a live blackboard',
+>>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
 
   supportsChatInput: true,
   supportsVideoInput: true,
   supportsScreenShare: true,
-  isPreConnectBufferEnabled: true,
+  isPreConnectBufferEnabled: false,
 
+<<<<<<< HEAD
   startButtonText: 'Start session',
+=======
+  logo: '/blackboard-logo.svg',
+  accent: undefined,
+  logoDark: '/blackboard-logo-dark.svg',
+  accentDark: undefined,
+  startButtonText: 'Start learning',
+>>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
 
   // optional: audio visualization configuration
   // audioVisualizerType: 'bar',

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Blackboard Tutor mark: chalkboard with a chalk-written function curve -->
+  <rect x="4" y="6" width="56" height="46" rx="7" fill="#25382f" stroke="#b98d5a" stroke-width="4"/>
+  <path d="M 16 38 C 22 20, 28 20, 33 34 C 37 45, 43 44, 48 30" fill="none" stroke="#f2efe4" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="48" cy="30" r="2.8" fill="#ffd66e"/>
+  <rect x="24" y="55" width="16" height="4" rx="2" fill="#b98d5a"/>
+</svg>

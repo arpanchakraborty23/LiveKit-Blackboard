@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, type MotionProps, motion } from 'motion/react';
 import {
   useAgent,
+  useAgentExpression,
   useSessionContext,
   useSessionMessages,
   useVoiceAssistant,
@@ -14,7 +15,14 @@ import {
   AgentControlBar,
   type AgentControlBarControls,
 } from '@/components/agents-ui/agent-control-bar';
+<<<<<<< HEAD
 import { ExpressionAura } from '@/components/agents-ui/expression-aura';
+=======
+import { MoodAura, useMoodColor } from '@/components/agents-ui/mood-visualizer';
+import { BoardCanvas } from '@/components/board/board-canvas';
+import { useBoard } from '@/hooks/use-board';
+import { useNeedleDiagrams } from '@/hooks/use-needle-diagrams';
+>>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
 import { cn } from '@/lib/shadcn/utils';
 
 const BOTTOM_VIEW_MOTION_PROPS: MotionProps = {
@@ -113,7 +121,7 @@ export interface AgentSessionView_01Props {
   /**
    * Shows a pre-connect buffer state with a shimmer message before messages appear.
    *
-   * @default true
+   * @default false
    */
   isPreConnectBufferEnabled?: boolean;
 
@@ -126,7 +134,7 @@ export function AgentSessionView_01({
   supportsChatInput = true,
   supportsVideoInput = true,
   supportsScreenShare = true,
-  isPreConnectBufferEnabled = true,
+  isPreConnectBufferEnabled = false,
   ref,
   className,
   ...props
@@ -137,6 +145,13 @@ export function AgentSessionView_01({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { state: agentState } = useAgent();
   const { audioTrack } = useVoiceAssistant();
+<<<<<<< HEAD
+=======
+  const { mood, expression } = useAgentExpression();
+  const moodColor = useMoodColor(mood);
+  const boardOps = useBoard();
+  useNeedleDiagrams();
+>>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
 
   const controls: AgentControlBarControls = {
     leave: true,
@@ -161,6 +176,7 @@ export function AgentSessionView_01({
       className={cn('bg-background relative z-10 h-full w-full overflow-hidden', className)}
       {...props}
     >
+<<<<<<< HEAD
       {/* Mood aura. Behind everything, never interactive: it is decoration that reports the
           agent's delivery, so it must not steal a click or cover the controls. */}
       <AnimatePresence>
@@ -177,6 +193,31 @@ export function AgentSessionView_01({
           </motion.div>
         )}
       </AnimatePresence>
+=======
+      {/* Blackboard (above the aura orb) */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="absolute inset-x-2 top-2 bottom-[135px] z-10 sm:inset-x-4 md:inset-x-10 md:bottom-[170px]"
+      >
+        <BoardCanvas ops={boardOps} />
+      </motion.div>
+>>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
+
+      {/* Agent presence orb (mood-driven, big and centered behind the board) */}
+      <AnimatePresence>
+        {!isChatOpen && (
+          <motion.div
+            {...SHIMMER_MOTION_PROPS}
+            className="pointer-events-none absolute inset-x-2 top-2 bottom-[135px] z-0 grid place-items-center sm:inset-x-4 md:inset-x-10 md:bottom-[170px]"
+          >
+            <div className="opacity-70">
+              <MoodAura size="lg" state={agentState} audioTrack={audioTrack} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Voice status pill */}
       <AnimatePresence>
@@ -190,12 +231,25 @@ export function AgentSessionView_01({
                 size="sm"
                 state={agentState}
                 audioTrack={audioTrack}
-                color="#6ee7b7"
-                className="h-4 w-24 text-emerald-200/90 **:data-[slot=bar]:w-[3px]"
+                color={moodColor}
+                className="h-5 w-28 **:data-[slot=bar]:w-[3px]"
+                style={{ color: moodColor }}
               />
+<<<<<<< HEAD
               <span className="text-xs font-medium text-white/70">
                 {agentState === 'speaking' ? 'Agent is speaking…' : 'Listening'}
               </span>
+=======
+              {mood && (
+                <span
+                  title={expression ?? undefined}
+                  className="font-mono text-[10px] font-medium tracking-wider capitalize"
+                  style={{ color: moodColor }}
+                >
+                  {mood}
+                </span>
+              )}
+>>>>>>> 68f2d672499f5e755fdd42e08361f321da03d83b
             </div>
           </motion.div>
         )}

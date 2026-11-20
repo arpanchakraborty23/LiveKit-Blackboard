@@ -10,7 +10,8 @@ import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
-from livekit.agents import AgentServer, JobContext, cli
+from livekit.agents import AgentServer, JobContext, JobProcess, cli
+from livekit.plugins import silero
 
 SRC_DIR = Path(__file__).resolve().parent
 if str(SRC_DIR) not in sys.path:
@@ -26,6 +27,17 @@ from agents.session_handler import handle_agent_session, parse_dispatch_metadata
 
 AGENT_NAME = os.getenv("AGENT_NAME", "my-agent")
 server = AgentServer()
+
+
+def prewarm(proc: JobProcess) -> None:
+    """Prewarm models like Silero VAD once per worker process."""
+    try:
+        proc.userdata["vad"] = silero.VAD.load()
+    except Exception:
+        pass
+
+
+server.setup_fnc = prewarm
 
 
 # Backward-compatible alias
