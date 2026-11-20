@@ -16,9 +16,6 @@ import {
   type AgentControlBarControls,
 } from '@/components/agents-ui/agent-control-bar';
 import { MoodAura, useMoodColor } from '@/components/agents-ui/mood-visualizer';
-import { BoardCanvas } from '@/components/board/board-canvas';
-import { useBoard } from '@/hooks/use-board';
-import { useNeedleDiagrams } from '@/hooks/use-needle-diagrams';
 import { cn } from '@/lib/shadcn/utils';
 
 const BOTTOM_VIEW_MOTION_PROPS: MotionProps = {
@@ -106,8 +103,6 @@ export function AgentSessionView_01({
   const { audioTrack } = useVoiceAssistant();
   const { mood, expression } = useAgentExpression();
   const moodColor = useMoodColor(mood);
-  const boardOps = useBoard();
-  useNeedleDiagrams();
 
   const controls: AgentControlBarControls = {
     leave: true,
@@ -132,17 +127,7 @@ export function AgentSessionView_01({
       className={cn('bg-background relative z-10 h-full w-full overflow-hidden', className)}
       {...props}
     >
-      {/* Blackboard (above the aura orb) */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-        className="absolute inset-x-2 top-2 bottom-[135px] z-10 sm:inset-x-4 md:inset-x-10 md:bottom-[170px]"
-      >
-        <BoardCanvas ops={boardOps} />
-      </motion.div>
-
-      {/* Agent presence orb (mood-driven, big and centered behind the board) */}
+      {/* Agent presence orb (mood-driven, big and centered) */}
       <AnimatePresence>
         {!isChatOpen && (
           <motion.div

@@ -248,7 +248,7 @@ function ChatTopBar({
         size="sm"
         state={agentState as 'connecting' | 'initializing' | 'listening' | 'thinking' | 'speaking' | 'disconnected'}
         audioTrack={audioTrack}
-        color={moodColor}
+        color={moodColor as `#${string}`}
         className="h-4 w-20"
         style={{ color: moodColor }}
       />

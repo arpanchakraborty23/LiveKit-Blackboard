@@ -6,6 +6,7 @@ import { useSession, useSessionContext } from '@livekit/components-react';
 import { WarningIcon } from '@phosphor-icons/react/dist/ssr';
 import type { AppConfig } from '@/app-config';
 import { AgentSessionProvider } from '@/components/agents-ui/agent-session-provider';
+import { StartAudioButton } from '@/components/agents-ui/start-audio-button';
 import { CortexDashboard } from '@/components/cortex/cortex-dashboard';
 import { CortexVoiceRoom } from '@/components/cortex/cortex-voice-room';
 import { Toaster } from '@/components/ui/sonner';
@@ -50,10 +51,13 @@ function ActiveSessionContent({
   }, [isConnected, connectionState, onEndSession]);
 
   return (
-    <CortexVoiceRoom
-      onEndSession={onEndSession}
-      className="fixed inset-0 z-50"
-    />
+    <main className="fixed inset-0 z-50 bg-black">
+      <CortexVoiceRoom
+        onEndSession={onEndSession}
+        className="fixed inset-0 z-50"
+      />
+      <StartAudioButton label="Start Audio" />
+    </main>
   );
 }
 

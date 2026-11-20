@@ -2,11 +2,8 @@
 
 import React, {
   type CSSProperties,
-  Children,
   type ComponentProps,
   type ReactNode,
-  cloneElement,
-  isValidElement,
   memo,
   useMemo,
 } from 'react';
@@ -22,42 +19,7 @@ import {
   useAgentAudioVisualizerGridAnimator,
 } from '@/hooks/agents-ui/use-agent-audio-visualizer-grid';
 import { cn } from '@/lib/shadcn/utils';
-
-/**
- * Resizes an array of per-band volume values to exactly `count` entries.
- * Excess values are trimmed from the end; if there are too few, the last
- * value is duplicated to fill the remainder. An empty array is padded with 0s.
- */
-export function normalizeVolumeBands(bands: number[], count: number): number[] {
-  if (bands.length === count) return bands;
-  if (bands.length > count) return bands.slice(0, count);
-  const lastValue = bands[bands.length - 1] ?? 0;
-  return [...bands, ...new Array(count - bands.length).fill(lastValue)];
-}
-
-function cloneSingleChild(
-  children: ReactNode | ReactNode[],
-  props?: Record<string, unknown>,
-  key?: unknown
-) {
-  return Children.map(children, (child) => {
-    // Checking isValidElement is the safe way and avoids a typescript error too.
-    if (isValidElement(child) && Children.only(children)) {
-      const childProps = child.props as Record<string, unknown>;
-      if (childProps.className) {
-        // make sure we retain classnames of both passed props and child
-        props ??= {};
-        props.className = cn(childProps.className as string, props.className as string);
-        props.style = {
-          ...(childProps.style as CSSProperties),
-          ...(props.style as CSSProperties),
-        };
-      }
-      return cloneElement(child, { ...props, key: key ? String(key) : undefined });
-    }
-    return child;
-  });
-}
+import { normalizeVolumeBands, cloneSingleChild } from '@/lib/volume';
 
 export const AgentAudioVisualizerGridCellVariants = cva(
   [

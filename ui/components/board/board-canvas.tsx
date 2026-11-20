@@ -1,9 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import katex from 'katex';
-import 'katex/dist/katex.min.css';
-import { parse as parseMath } from 'mathjs';
+
+// Safe Katex fallback
+let katex: any = null;
+try {
+  katex = require('katex');
+} catch {
+  katex = {
+    renderToString: (str: string) => `<span>${str}</span>`,
+  };
+}
 import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
@@ -153,16 +160,61 @@ interface SampledPlot {
   valid: boolean;
 }
 
+/**
+ * Safe, lightweight mathematical expression compiler to plot equations
+ * without requiring the heavy external `mathjs` bundle.
+ */
+function compileMathExpr(expr: string): (x: number) => number {
+  try {
+    let s = expr.trim();
+    // Exponentiation ^ -> **
+    s = s.replace(/\^/g, '**');
+    // Math functions
+    s = s.replace(
+      /\b(sin|cos|tan|asin|acos|atan|sinh|cosh|tanh|sqrt|cbrt|abs|log|exp|floor|ceil|round)\b/gi,
+      (m) => `Math.${m.toLowerCase()}`
+    );
+    // Constants
+    s = s.replace(/\b(pi|PI)\b/g, 'Math.PI');
+    s = s.replace(/\b(e|E)\b/g, 'Math.E');
+    // Implicit multiplication: e.g. 2x -> 2*x, 3(x) -> 3*(x)
+    s = s.replace(/(\d)\s*([a-zA-Z(])/g, '$1*$2');
+    s = s.replace(/(\))\s*([a-zA-Z0-9(])/g, '$1*$2');
+
+    const evaluator = new Function(
+      'x',
+      'Math',
+      `"use strict";
+       try {
+         const val = (${s});
+         return typeof val === 'number' && Number.isFinite(val) ? val : NaN;
+       } catch {
+         return NaN;
+       }`
+    );
+
+    return (x: number) => {
+      try {
+        return evaluator(x, Math);
+      } catch {
+        return NaN;
+      }
+    };
+  } catch {
+    return () => NaN;
+  }
+}
+
 function sampleFunction(expr: string, domain: [number, number], box: Rect): SampledPlot {
   try {
-    const compiled = parseMath(expr).compile();
+    const evaluator = compileMathExpr(expr);
     const steps = 220;
     const points: Array<[number, number | null]> = [];
     for (let i = 0; i <= steps; i++) {
       const x = domain[0] + ((domain[1] - domain[0]) * i) / steps;
       let y: number;
       try {
-        y = Number(compiled.evaluate({ x }));
+        y = evaluator(x);
       } catch {
         y = NaN;
       }

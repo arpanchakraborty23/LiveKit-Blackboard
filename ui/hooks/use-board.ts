@@ -34,9 +34,9 @@ export function useBoard(): BoardOp[] {
       }
     };
 
-    room.on(RoomEvent.DataReceived, onData);
+    (room as any).on?.(RoomEvent.DataReceived, onData);
     return () => {
-      room.off(RoomEvent.DataReceived, onData);
+      (room as any).off?.(RoomEvent.DataReceived, onData);
     };
   }, [room]);
 
