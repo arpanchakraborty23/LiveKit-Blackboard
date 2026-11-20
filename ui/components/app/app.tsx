@@ -6,7 +6,6 @@ import { useSession, useSessionContext } from '@livekit/components-react';
 import { WarningIcon } from '@phosphor-icons/react/dist/ssr';
 import type { AppConfig } from '@/app-config';
 import { AgentSessionProvider } from '@/components/agents-ui/agent-session-provider';
-import { StartAudioButton } from '@/components/agents-ui/start-audio-button';
 import { CortexDashboard } from '@/components/cortex/cortex-dashboard';
 import { CortexVoiceRoom } from '@/components/cortex/cortex-voice-room';
 import { Toaster } from '@/components/ui/sonner';
@@ -23,7 +22,7 @@ function AppSetup() {
 }
 
 /**
- * Inner session runner - only mounted after user explicitly clicks "Start session".
+ * Inner session runner - only mounted after user explicitly clicks "Start voice session".
  * Connects to LiveKit and manages the active in-call experience.
  */
 function ActiveSessionContent({
@@ -43,7 +42,7 @@ function ActiveSessionContent({
     });
   }, [start]);
 
-  // If user ends call or connection drops, return to welcome screen
+  // If user ends call or connection drops, return to dashboard
   useEffect(() => {
     if (isConnected === false && connectionState === 'disconnected') {
       onEndSession();
@@ -51,12 +50,9 @@ function ActiveSessionContent({
   }, [isConnected, connectionState, onEndSession]);
 
   return (
-    <TeamsSessionView
+    <CortexVoiceRoom
+      onEndSession={onEndSession}
       className="fixed inset-0 z-50"
-      supportsChatInput={appConfig.supportsChatInput}
-      supportsVideoInput={appConfig.supportsVideoInput}
-      supportsScreenShare={appConfig.supportsScreenShare}
-      isPreConnectBufferEnabled={appConfig.isPreConnectBufferEnabled}
     />
   );
 }
@@ -107,21 +103,13 @@ export function App({ appConfig }: AppProps) {
   }, []);
 
   return (
-    <div className="bg-background relative min-h-svh w-full overflow-x-hidden">
-      {/* 
-        Top Navigation Bar:
-        Visible on the welcome screen; automatically hidden during active voice session.
-      */}
-      {!isSessionStarted && <TopNavBar />}
-
-      {/* When idle: Show Welcome view with Start button. Does NOT call /api/token */}
+    <div className="bg-[#000000] relative min-h-svh w-full overflow-x-hidden">
+      {/* When idle: Show Cortex Dashboard. Does NOT call /api/token */}
       {!isSessionStarted && (
-        <main className="flex min-h-[calc(100svh-4rem)] items-center justify-center p-6">
-          <WelcomeView
-            startButtonText={appConfig.startButtonText}
-            onStartCall={handleStartSession}
-          />
-        </main>
+        <CortexDashboard
+          userName="Arpan"
+          onStartVoice={handleStartSession}
+        />
       )}
 
       {/* When active: Mounts LiveKit session on demand, requests /api/token and starts audio */}
